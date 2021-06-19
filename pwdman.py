@@ -1,13 +1,14 @@
 from Crypto.Cipher import AES
 import base64
-import os, psycopg2, subprocess, getpass, random, secrets
+import os,subprocess, getpass, secrets
+import psycopg2
 
 
-db_name = "Test"
-db_host = "127.0.0.1"
-db_user = "postgres"
-db_passw = "lol123"
-passw1 = "Testing1234"
+db_name = ""
+db_host = ""
+db_user = ""
+db_passw = ""
+passw1 = ""
 pwdwrong = ["Sorry that's not correct!",
             "Not even close!",
             "Nice Try!",
