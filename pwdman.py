@@ -1,10 +1,13 @@
 from Crypto.Cipher import AES
 import base64
 import os,subprocess, getpass, secrets
-from passwordManager import *
+from passwordManager import base
 
 #import psycopg2
 import sqlite3
+
+
+
 
 
 
@@ -12,12 +15,17 @@ db_name = ""
 db_host = ""
 db_user = ""
 db_passw = ""
-passw1 = ""
+passw1 = "a"
+main_pass = ""
 pwdwrong = ["Sorry that's not correct!",
             "Not even close!",
             "Nice Try!",
             "Hold on and give the correct password!"
             ]
+
+
+def setup():
+    menu()
 
 def menu():
     while True:
@@ -27,14 +35,13 @@ def menu():
             print("Welcome".center(50))
             user_inp = input("\npwm> ")
             if user_inp == "1":
-                insert()
+                base.insert()
             elif user_inp == "3":
-                viewDb()
+                base.viewDb()
             else:
                 return -1
         else:
             print(secrets.choice(pwdwrong))
-
 
 
 
@@ -69,7 +76,8 @@ def decrypt(encMsg, masterkey):
 
 
 # 
-menu()
+
+setup()
 
 
 

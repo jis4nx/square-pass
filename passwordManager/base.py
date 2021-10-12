@@ -1,25 +1,11 @@
 
 #import psycopg
-from Crypto.Cipher import AES
+#from Crypto.Cipher import AES
 import getpass
 import sqlite3
 import base64
 import os,subprocess, getpass, secrets
-
-
-def encrypt(msg, masterkey):
-    masterkey = base64.b64encode(masterkey) 
-    IV = os.urandom(16)
-    cipher = AES.new(masterkey, AES.MODE_CFB, IV)
-    return base64.b64encode(IV + cipher.encrypt(msg))
-
-def decrypt(encMsg, masterkey):
-    masterkey = base64.b64encode(masterkey) 
-    encMsg = base64.b64decode(encMsg)
-    IV = encMsg[:AES.block_size]
-    cipher = AES.new(masterkey, AES.MODE_CFB, IV)
-    return cipher.decrypt(encMsg[AES.block_size:])
-
+from passwordManager.ciphers import encrypt, decrypt
 
 def dbconnect():
     try:
@@ -48,7 +34,9 @@ def insert():
                 "pass":enc.decode()
             })
         
+           
             print(f"[+]Successfully Added for {u_name}")
+            input()
     except Exception as error:
         print("Failed to Insert Into Database", error)
 
@@ -64,26 +52,40 @@ def searchPassw(passw):
 def serchMail(mail):
     pass
 
+
+
+def print_as_box(app_name,username,passes):
+    total =  len(app_name)+len(username)+len(passes)
+    box_shade = "="*(  int(total)+10 )
+    box = box_shade
+    print(box_shade)
+
+
+
+
 def viewDb():
+    passw1 = "shoaibislam"
     try:
         connection = dbconnect()
         cur = connection.cursor()
         readquery = "SELECT * FROM users;"
-        cur.execute(readquery)
-        rows = cur.fetchall() 
-        connection.commit()
-        for row in rows:
-            encPass = str(row[2]).encode()
-            username = row[1]
-            decipher = decrypt(encPass, passw1.encode()).decode()
-            print(f"{username} | {decipher}\n")
-        
-    except (Exception, psycopg2.Error) as error:
+
+        with connection:
+
+            cur.execute(readquery)
+            rows = cur.fetchall() 
+            
+            for row in rows:
+                encPass = str(row[2]).encode()
+                username = row[1]
+                app_name = row[0]
+                decipher = decrypt(encPass, passw1.encode()).decode()
+                box="======================================="
+                print(box)
+                print(f" {app_name} |{username} | {decipher}\n")
+            input()
+    except Exception as error:
         print("Failed to Read Database", error)
     
-    finally:
-        if connection:
-            connection.close()
-            cur.close()
 
 
