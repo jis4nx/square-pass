@@ -38,6 +38,12 @@ def menu():
                 base.insert()
             elif user_inp == "3":
                 base.viewDb()
+            
+            elif user_inp == "4":
+
+                base.viewdb_by_appname()
+            elif user_inp == "6":
+                base.viewdb_by_username()
             else:
                 return -1
         else:

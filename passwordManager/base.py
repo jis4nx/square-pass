@@ -55,10 +55,92 @@ def serchMail(mail):
 
 
 def print_as_box(app_name,username,passes):
-    total =  len(app_name)+len(username)+len(passes)
+    total =  len(app_name)+len(username)+len(paisses)
     box_shade = "="*(  int(total)+10 )
     box = box_shade
     print(box_shade)
+
+
+
+
+
+
+
+
+
+
+
+
+
+def viewdb_by_appname():
+    passw1 = "shoaibislam"
+    try:
+        connection = dbconnect()
+        cur = connection.cursor()
+
+
+        username_inp = input("input app_name : ")
+        readquery = "SELECT * FROM users WHERE username=:username_inp;"
+
+        with connection:
+
+            cur.execute(readquery,{"username_inp":username_inp})
+            rows = cur.fetchall() 
+            
+            for row in rows:
+                encPass = str(row[2]).encode()
+                username = row[1]
+                app_name = row[0]
+                decipher = decrypt(encPass, passw1.encode()).decode()
+                box="======================================="
+                print(box)
+                print(f" {app_name} |{username} | {decipher}\n")
+            input()
+    except Exception as error:
+        print("Failed to Read Database", error)
+    
+
+
+
+
+def viewdb_by_username():
+    passw1 = "shoaibislam"
+    try:
+        connection = dbconnect()
+        cur = connection.cursor()
+
+
+        usr_app_inp = input("input app_name : ")
+        readquery = "SELECT * FROM users WHERE app_name=:usr_app_inp;"
+
+        with connection:
+
+            cur.execute(readquery,{"usr_app_inp":usr_app_inp})
+            rows = cur.fetchall() 
+            
+            for row in rows:
+                encPass = str(row[2]).encode()
+                username = row[1]
+                app_name = row[0]
+                decipher = decrypt(encPass, passw1.encode()).decode()
+                box="======================================="
+                print(box)
+                print(f" {app_name} |{username} | {decipher}\n")
+            input()
+    except Exception as error:
+        print("Failed to Read Database", error)
+    
+
+
+
+
+
+
+
+
+
+
+
 
 
 
