@@ -95,7 +95,7 @@ def viewall(MASTERPASS):
 
                 cur.execute(readquery)
                 rows = cur.fetchall() 
-            content_table = print_box(row, m_pass)
+            content_table = print_box(rows, m_pass)
             print(content_table)
         except Exception as error:
             print("Failed to Read Database", error)
