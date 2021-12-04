@@ -1,0 +1,2 @@
+pycryptodome==3.10.1
+prettytable==2.4.0
