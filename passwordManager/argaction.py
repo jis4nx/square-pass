@@ -1,0 +1,68 @@
+import pyperclip
+
+
+def copy_to_clipboard(*argv ,combo=False ,devider=":"):
+    
+    """
+    
+    simply copy a string to clipboard or mixes gmail,password seperated by `devider` 
+    to make a combo and copy the full text into clipboard
+
+    `*argv` : List of arguments
+
+    `combo` ( options are either False or True ):
+        False : Copies the first argument only .
+        True : Copies the combo of all `argv` seperated by `devider`
+    
+    `devider` : devides different argument
+
+    e.g  : copy_to_clipboard( "This_is_A_pass" )
+        
+           copy_to_clipboard(
+                        
+                        "helloworld@gmail.com",
+                        "This_is_A_pass", 
+                        combo=True , 
+                        devider="-" 
+
+                        )
+    """
+
+    if combo is False:
+        pyperclip.copy(argv[0])
+    else : 
+        combined_text = ""
+        for arg in argv:
+            if arg != argv[-1]:
+                combined_text += str(arg)+devider
+            else:
+                combined_text += str(arg)
+
+        pyperclip.copy(combined_text)
+
+
+def show_hints(text , text_type="password" security=3, jokes=True):
+    """
+    text_types are :
+        password
+        gmail
+        
+    `security` : number of last digits to show as hint
+    `jokes` : special feature for hint option . shows funny hints .
+
+    """
+    if jokes is False :
+        amount_of_chars = len(text) - security + 1
+        hidden_chars = "*" * amount_of_chars
+        hint = text[0]+hidden_chars+text[-(security):]
+        
+        return(hint)
+
+    else:
+        pass
+        #developments goin on ( shoaib islam )
+
+
+
+
+
