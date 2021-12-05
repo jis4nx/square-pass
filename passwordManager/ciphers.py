@@ -1,7 +1,6 @@
-import base64
+import base64, hashlib
 from Crypto.Cipher import AES 
 import os
-
 
 def encrypt(msg, masterkey):
     masterkey = base64.b64encode(masterkey) 
@@ -16,5 +15,11 @@ def decrypt(encMsg, masterkey):
     cipher = AES.new(masterkey, AES.MODE_CFB, IV)
     return cipher.decrypt(encMsg[AES.block_size:])
 
+def finalhash(msg, masterkey):
+    masterkey = base64.b64encode(masterkey) 
+    IV = "agun".encode()*4
+    cipher = AES.new(masterkey, AES.MODE_CFB, IV)
+    encd = base64.b64encode(IV + cipher.encrypt(msg))
+    return hashlib.sha256(encd).hexdigest()
 
 

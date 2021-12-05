@@ -1,29 +1,32 @@
 import os, getpass
-import sqlite3
-from passwordManager.ciphers import encrypt
+import platform
+from passwordManager.ciphers import encrypt,decrypt, finalhash 
 
-# print("Installing Module....")
-# os.system("pythom -m pip install -r requirements.txt")
-# print("Creating Database....")
+# os.system("python -m pip install -r requirements.txt")
 # os.system("python create_db.py")
 
+linuxdir = os.path.expanduser("~/.local/share/pass.key")
+windir = os.path.expanduser("~\\AppData\\pass.key")
 
-ranbyte = os.urandom(16)
-if not os.path.isfile("lol.enc"):
+def createpass(dir, txt):
+    if not os.path.isfile(dir):
+        with open(dir, 'wb') as f:
+            f.write(txt)
+            print("Passkey created")
+    return "Already exist"
+def setup():
+    salt = 'xx01'
     while True:
         userInp = getpass.getpass("Create your Masterpass: ")
         userInp1 = getpass.getpass("Confirm Masterpass: ")
         if userInp == userInp1:
-            try:
-                conn = sqlite3.connect("passwordmanager.db")
-                enc_mpass = encrypt(userInp.encode(), ranbyte)
-            except Exception as err:
-                print(err)
+            keysalt = (userInp[-4:]+ salt) * 2
+            # enc_mpass = encrypt(userInp.encode(), keysalt.encode())
+            hashed_mpass = finalhash(userInp.encode(), keysalt.encode())
+            if platform.system() == 'Linux':
+                createpass(linuxdir, hashed_mpass.encode())
+            else:
+                createpass(windir, hashed_mpass.encode())
             break
-    with open('pass.enc', 'wb') as f:
-        f.write(enc_mpass)
-else:
-    pass
-
-
-
+if __name__ == "__main__":
+    setup()

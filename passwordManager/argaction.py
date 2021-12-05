@@ -41,7 +41,7 @@ def copy_to_clipboard(*argv ,combo=False ,devider=":"):
         pyperclip.copy(combined_text)
 
 
-def show_hints(text , text_type="password" security=3, jokes=True):
+def show_hints(text , text_type="password", security=3, jokes=False):
     """
     text_types are :
         password
