@@ -28,20 +28,23 @@ python main.py backup
 ------------------------------------------------
 """
 action = sys.argv[1]
+
+db =base.DatabaseManager("shoaibislam")
+
 if action == "help":
     print(DASH)
 elif action == "add":
-    base.insert("shoaibislam")
+    db.insert()
 elif action == "-a":
     act_name = sys.argv[2]
     print(act_name)
-    base.viewdb_by_appname("shoaibislam", act_name)
+    db.viewdb_by_appname(act_name)
 elif action == "-u":
     act_name = sys.argv[2]
-    base.viewdb_by_username("shoaibislam", act_name)
+    db.viewdb_by_username(act_name)
 
 elif action == "showall":
-    base.viewall("shoaibislam")
+    db.viewall()
 
 else:
     print(action)

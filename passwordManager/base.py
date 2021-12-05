@@ -1,101 +1,121 @@
-import sqlite3,base64, getpass
+
 from passwordManager.ciphers import encrypt, decrypt
-from prettytable import PrettyTable
+import sqlite3,base64, getpass
+from passwordManager import tools
 
-def print_box(lst, master_pass):
-    t = PrettyTable(["App Name", "Username", "Password"])
-    for row in lst:
-        encPass = str(row[2]).encode()
-        username = row[1]
-        app_name = row[0]
-        decipher = decrypt(encPass, master_pass.encode()).decode()
-        t.add_row([username, app_name, decipher])
-    return t 
 
-def dbconnect():
-    try:
-        conn = sqlite3.connect("passwordmanager.db")
-        return conn
-    except Exception as error:
-        print("Failed to Connect Database", error)
+class DatabaseManager:
+    """ Class Doc Goes Here"""
 
-def insert(MASTERPASS):
-    try:
-        master_pass= MASTERPASS
-        connection = dbconnect()
-        cur = connection.cursor()
+    def __init__(self,MasterPass):
+        self.MasterPass = MasterPass
+
+        try:
+            self.connection = sqlite3.connect("passwordmanager.db")
+            self.cur = self.connection.cursor()
+
+        except Exception as error:
+            print("Failed to Connect Database", error , "okaymai")
+
+    
+
+    def viewdb_by_appname(self,APP_NAME):
         
-        m_pass = getpass.getpass("MasterKey: ")
+        master_pass = self.MasterPass
+        app_name = APP_NAME
+        readquery = "SELECT * FROM users WHERE app_name=:app_name;"
+
+
+        #m_pass = getpass.getpass("MasterKey : ")
+        m_pass = "shoaibislam"
+        if m_pass == master_pass :
+            
+            try:
+                with self.connection:
+                    exs = self.cur.execute(readquery,{"app_name":app_name})
+                    rows = self.cur.fetchall() 
+            
+                content_table = tools.print_box(rows, m_pass)
+            
+                print(content_table)
+
+            except Exception as error:
+                print("Failed to Read Database", error ,"breh")
+
+
+    def viewdb_by_username(self,UserName):
+        
+        master_pass = self.MasterPass
+        username = UserName
+        readquery = "SELECT * FROM users WHERE username=:username;"
+
+        #m_pass = getpass.getpass("MasterKey: ")
+        m_pass = "shoaibislam"
+
+        if m_pass == master_pass:
+            try:
+                with self.connection:
+                    self.cur.execute(readquery,{"username":username})
+                    rows = self.cur.fetchall() 
+                
+                content_table = tools.print_box(rows, m_pass)
+                print(content_table)
+            
+            except Exception as error:
+                print("Failed to Read Database", error)
+
+
+
+    def viewall(self):
+        master_pass = self.MasterPass
+        readquery = "SELECT * FROM users;"
+
+        # m_pass = getpass.getpass("MasterKey: ")
+        m_pass = "shoaibislam"
+        
+        if m_pass == master_pass :
+            try:
+                
+                with self.connection:
+
+                    self.cur.execute(readquery)
+                    rows = self.cur.fetchall() 
+                
+                content_table = tools.print_box(rows, m_pass)
+                print(content_table)
+            
+            except Exception as error:
+                print("Failed to Read Database", error)
+     
+
+    def insert(self,AppName=None,UserName=None):
+
+        master_pass= self.MasterPass
+        InsertQuery = f"INSERT INTO users (app_name,username, passw) VALUES (:appname ,:u_name,:pass)"
+            
+        #m_pass = getpass.getpass("MasterKey: ")
+
+        m_pass = "shoaibislam"
 
         if m_pass == master_pass:
 
             app_name = str(input("app_name :"))
             u_name = str(input("Username: "))
             enc = encrypt(getpass.getpass("Password: ").encode(), m_pass.encode())
-            with connection:
-                InsertQuery = f"INSERT INTO users (app_name,username, passw) VALUES (:appname ,:u_name,:pass)"
-                cur.execute(InsertQuery,{
-                    "appname": app_name,
-                    "u_name":u_name,
-                    "pass":enc.decode()
-                })
             
+            try: 
+
+                with self.connection:
+                    self.cur.execute(InsertQuery,{
+                        "appname": app_name,
+                        "u_name":u_name,
+                        "pass":enc.decode()
+                    }
+                    )
+                
+                
                 print(f"[+]Successfully Added for {u_name}")
-                input()
-    except Exception as error:
-        print("Failed to Insert Into Database", error)
-
-def viewdb_by_appname(MASTERPASS,APP_NAME):
-    master_pass = MASTERPASS
-    m_pass = getpass.getpass("MasterKey : ")
-    if m_pass == master_pass :
-        try:
-            connection = dbconnect()
-            cur = connection.cursor()
-            app_name = APP_NAME
-            readquery = "SELECT * FROM users WHERE app_name=:app_name;"
-            with connection:
-                cur.execute(readquery,{"app_name":app_name})
-                rows = cur.fetchall() 
-            content_table = print_box(rows, m_pass)
-            print(content_table)
-        except Exception as error:
-            print("Failed to Read Database", error)
 
 
-def viewdb_by_username(MASTERPASS,USER_NAME):
-    master_pass = MASTERPASS
-    m_pass = getpass.getpass("MasterKey: ")
-    if m_pass == master_pass:
-        try:
-            connection = dbconnect()
-            cur = connection.cursor()
-            username = USER_NAME
-            readquery = "SELECT * FROM users WHERE username=:username;"
-            with connection:
-                cur.execute(readquery,{"username":username})
-                rows = cur.fetchall() 
-            content_table = print_box(rows, m_pass)
-            print(content_table)
-        except Exception as error:
-            print("Failed to Read Database", error)
-
-
-def viewall(MASTERPASS):
-    master_pass = MASTERPASS
-    # m_pass = getpass.getpass("MasterKey: ")
-    m_pass = "shoaibislam"
-    if m_pass == master_pass :
-        try:
-            connection = dbconnect()
-            cur = connection.cursor()
-            readquery = "SELECT * FROM users;"
-
-            with connection:
-
-                cur.execute(readquery)
-                rows = cur.fetchall() 
-            content_table = print_box(rows, m_pass)
-            print(content_table)
-        except Exception as error:
-            print("Failed to Read Database", error)
+            except Exception as error:
+                print("Failed to Insert Into Database", error)

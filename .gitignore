@@ -1,6 +1,8 @@
+
 /__pycache__/
 *.pyc
-*.db
-*.BAK
+passwordmanager.db
+
 /passwordManger/__pycache__/
+
 /backups/
