@@ -1,7 +1,7 @@
 
 /__pycache__/
 *.pyc
-*.db
+passwordmanager.db
 
 /passwordManger/__pycache__/
 
