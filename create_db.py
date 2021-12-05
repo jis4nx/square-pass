@@ -1,13 +1,15 @@
-
 import sqlite3
 
 conn = sqlite3.connect('passwordmanager.db')
 
 c = conn.cursor()
 
-c.execute(""" CREATE TABLE pass(
+c.execute(""" CREATE TABLE pass (
                 mspass text,
-                xx text),
+                xx text
+                )""")
+
+c.execute(""" CREATE TABLE
                 users (
                 app_name text,
                 username text,
