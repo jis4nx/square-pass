@@ -11,7 +11,8 @@ class DatabaseManager:
         self.MasterPass = MasterPass
         self.connection = sqlite3.connect("passwordmanager.db")
         self.cur = self.connection.cursor()
-    def dbact(self, query, dict=None):
+
+    def dbfetch(self, query, dict=None):
             try:
                 with self.connection:
                     if dict is None:
@@ -29,7 +30,7 @@ class DatabaseManager:
             m_pass = "shoaibislam"
             app_dict = {"app_name":app_name}
             if m_pass == master_pass :
-                row = self.dbact(readquery, app_dict)
+                row = self.dbfetch(readquery, app_dict)
                 content_table = tools.print_box(row, m_pass)
                 print(content_table)
 
@@ -39,7 +40,7 @@ class DatabaseManager:
             m_pass = "shoaibislam"
             user_dict = {"user_name":user_name}
             if m_pass == master_pass:
-                row = self.dbact(readquery, user_dict)
+                row = self.dbfetch(readquery, user_dict)
                 content_table = tools.print_box(row, m_pass)
                 print(content_table)
 
@@ -49,17 +50,11 @@ class DatabaseManager:
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
-            try:
-                with self.connection:
-                    self.cur.execute(readquery)
-                    rows = self.cur.fetchall()
-                content_table = tools.print_box(rows, m_pass)
-                print(content_table)
-            except sqlite3.Error as error:
-                print("Failed to Read Database", error)
+            row = self.dbfetch(readquery)
+            content_table = tools.print_box(row, m_pass)
+            print(content_table)
 
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
-
         master_pass= self.MasterPass
         insert_query = """INSERT INTO users (app_name,username, passw)
                             VALUES (:appname ,:u_name,:pass)"""
@@ -76,7 +71,6 @@ class DatabaseManager:
                         "pass":enc.decode()
                     }
                     )
-
                 print(f"[+]Successfully Added for {u_name}")
             except sqlite3.Error as error:
                 print("Failed to Insert Into Database", error)
