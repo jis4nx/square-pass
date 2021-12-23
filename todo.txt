@@ -1,0 +1,42 @@
+
+
+
+
+## Tasks :
+
+[1] search by appname and both username ( Shoaib Islam )
+
+[2] Show warning about passwords weakness ( Shoaib Islam )
+
+[3] copy password to the clipboard ( discussion needed )
+
+[4] show password as descending order ( shoaib Islam ) 
+
+[5] bigbang ( Rakibul islam Jisna )
+
+[6] show hints ( Shoaib Islam )
+
+[7] Generate Random Password ( Shoaib Islam )
+
+[8] Sync Online (*)
+
+[9] Check If Credential Matches Online Data Breaches
+
+[10] Add Keys With Title (*)
+
+[11] Add Notes Plain Text (*)
+
+[12] Edit A credential (*)
+
+[13] Version Info (Shoaib Islam)
+
+
+
+## On Progress :
+
+  [1] Search Credential Enhancement - Shoaib Islam
+
+
+## Complete : 
+
+  []
