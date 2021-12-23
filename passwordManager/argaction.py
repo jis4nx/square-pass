@@ -1,6 +1,22 @@
 import pyperclip
 
 
+
+
+
+def whoryou(pass):
+    pass
+
+
+
+
+
+
+
+
+
+
+
 def copy_to_clipboard(*argv ,combo=False ,devider=":"):
     
     """
@@ -39,6 +55,7 @@ def copy_to_clipboard(*argv ,combo=False ,devider=":"):
                 combined_text += str(arg)
 
         pyperclip.copy(combined_text)
+
 
 
 def show_hints(text , text_type="password", security=3, jokes=False):

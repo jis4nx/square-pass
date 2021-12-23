@@ -53,10 +53,11 @@ opt = parser.add_argument_group('Options :', '')
 flags.add_argument("--ls","--showlist",action="store_const",help="Shows Credentials",const="all")
 flags.add_argument("--rm","--remove",action="store_const",help="remove a credential",const="3")
 flags.add_argument("--Ss","--search", metavar="" ,help="search trough credentials")
-flags.add_argument("--t","--touch", action="store_true", help="Add new credential")
+flags.add_argument("-T","--touch", action="store_true", help="Add new credential")
 
-opt.add_argument("--u","--username",metavar="", help="Filter by Username")
-opt.add_argument("--a" ,"--appname",metavar="",help="Filter by Appname")
+opt.add_argument("-U","--username",metavar="", help="Filter by Username")
+opt.add_argument("-A" ,"--appname",metavar="",help="Filter by Appname")
+
 opt.add_argument("--c","--copy",action="store_true",help="Copy Pass to clip board")
 opt.add_argument("--r",'--recent',action="store_true",help="Show recently modified credentials")
 opt.add_argument("--w",'--warn',action="store_true",help="warn about weak passwords")
@@ -73,7 +74,12 @@ args = parser.parse_args()
 
 
 if args.ls:
-    db.viewall()
+    if args.appname:
+        db.viewdb_by_appname(args.appname)
+    elif args.username:
+        db.viewdb_by_username(args.username)
+    else:
+        db.viewall()
 if args.t:
     db.insert()
 
