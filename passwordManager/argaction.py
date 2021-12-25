@@ -10,13 +10,6 @@ def whoryou(pass):
 
 
 
-
-
-
-
-
-
-
 def copy_to_clipboard(*argv ,combo=False ,devider=":"):
     
     """

@@ -23,26 +23,45 @@ class DatabaseManager:
             except sqlite3.Error as err:
                 print(err)
 
-    def viewdb_by_appname(self,APP_NAME):
-            master_pass = self.MasterPass
-            app_name = APP_NAME
-            readquery = "SELECT * FROM users WHERE app_name=:app_name;"
-            m_pass = "shoaibislam"
-            app_dict = {"app_name":app_name}
-            if m_pass == master_pass :
-                row = self.dbfetch(readquery, app_dict)
-                content_table = tools.print_box(row, m_pass)
-                print(content_table)
+    # def viewdb_by_appname(self,APP_NAME):
+            # master_pass = self.MasterPass
+            # app_name = APP_NAME
+            # readquery = "SELECT * FROM users WHERE app_name=:app_name;"
+            # m_pass = "shoaibislam"
+            # app_dict = {"app_name":app_name}
+            # if m_pass == master_pass :
+                # row = self.dbfetch(readquery, app_dict)
+                # content_table = tools.print_box(row, m_pass)
+                # print(content_table)
 
-    def viewdb_by_username(self,user_name):
-            master_pass = self.MasterPass
-            readquery = "SELECT * FROM users WHERE username=:user_name;"
-            m_pass = "shoaibislam"
-            user_dict = {"user_name":user_name}
-            if m_pass == master_pass:
-                row = self.dbfetch(readquery, user_dict)
-                content_table = tools.print_box(row, m_pass)
-                print(content_table)
+    # def viewdb_by_username(self,user_name):
+            # master_pass = self.MasterPass
+            # readquery = "SELECT * FROM users WHERE username=:user_name;"
+            # m_pass = "shoaibislam"
+            # user_dict = {"user_name":user_name}
+            # if m_pass == master_pass:
+                # row = self.dbfetch(readquery, user_dict)
+                # content_table = tools.print_box(row, m_pass)
+                # print(content_table)
+
+  
+    def viewdb_base(self,username=None,appname=None,state="or"):
+
+            if username is None and appname is None:
+                self.viewall()
+
+            elif username is not None or appname is not None:
+                
+                master_pass = self.MasterPass
+                readquery = f"SELECT * FROM users WHERE username=:user_name {state} app_name=:appname;"
+            
+                m_pass = "shoaibislam"
+                user_dict = {"user_name":username,"appname":appname}
+                if m_pass == master_pass:
+                    row = self.dbfetch(readquery, user_dict)
+                    content_table = tools.print_box(row, m_pass)
+                    print(content_table)
+
 
     def viewall(self):
         master_pass = self.MasterPass
@@ -53,6 +72,8 @@ class DatabaseManager:
             row = self.dbfetch(readquery)
             content_table = tools.print_box(row, m_pass)
             print(content_table)
+
+    
 
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
         master_pass= self.MasterPass

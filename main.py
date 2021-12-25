@@ -57,7 +57,7 @@ flags.add_argument("-T","--touch", action="store_true", help="Add new credential
 
 opt.add_argument("-U","--username",metavar="", help="Filter by Username")
 opt.add_argument("-A" ,"--appname",metavar="",help="Filter by Appname")
-
+opt.add_argument("-S" , "--sure" , action="store_true" ,help="Filter both we pass and username")
 opt.add_argument("--c","--copy",action="store_true",help="Copy Pass to clip board")
 opt.add_argument("--r",'--recent',action="store_true",help="Show recently modified credentials")
 opt.add_argument("--w",'--warn',action="store_true",help="warn about weak passwords")
@@ -73,14 +73,23 @@ dan.add_argument("--bigbang",action="store_true",help="Erase all information")
 args = parser.parse_args()
 
 
+USERNAME = args.username if args.username else None
+APPNAME = args.appname if args.appname else None
+
+
+
+
 if args.ls:
-    if args.appname:
-        db.viewdb_by_appname(args.appname)
-    elif args.username:
-        db.viewdb_by_username(args.username)
+    if args.sure:
+        db.viewdb_base(username=USERNAME,appname=APPNAME,state="and")
+
+    elif args.appname or args.username:
+        db.viewdb_base(username=USERNAME,appname=APPNAME)
     else:
-        db.viewall()
-if args.t:
+        db.viewdb_base()
+
+
+if args.touch:
     db.insert()
 
 
