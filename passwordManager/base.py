@@ -2,6 +2,9 @@ import sqlite3
 import getpass
 from passwordManager.ciphers import encrypt
 from passwordManager import tools
+import base64
+import sys
+import os
 
 
 class DatabaseManager:
@@ -11,6 +14,7 @@ class DatabaseManager:
         self.MasterPass = MasterPass
         self.connection = sqlite3.connect("passwordmanager.db")
         self.cur = self.connection.cursor()
+        self.termlines = os.get_terminal_size().columns
 
     def dbfetch(self, query, dict=None):
             try:
@@ -65,13 +69,14 @@ class DatabaseManager:
 
     def viewall(self):
         master_pass = self.MasterPass
-        readquery = "SELECT * FROM users;"
+        readquery = "SELECT * FROM notes;"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
-            content_table = tools.print_box(row, m_pass)
-            print(content_table)
+            # content_table = tools.print_box(row, m_pass)
+            for x, y in row:
+                print(x, base64.b64decode(y).decode())
 
     
 
@@ -93,5 +98,53 @@ class DatabaseManager:
                     }
                     )
                 print(f"[+]Successfully Added for {u_name}")
+            except sqlite3.Error as error:
+                print("Failed to Insert Into Database", error)
+
+
+    def keyins(self, title=None): # Pylint: disable=W0613
+        master_pass= self.MasterPass
+        insert_query = """INSERT INTO keys (title, key)
+                            VALUES (:key_title ,:key_pass)"""
+        m_pass = "shoaibislam"
+        if m_pass == master_pass:
+            if title is None:
+                title = input("Title :")
+            enc = encrypt(getpass.getpass("Key: ").encode(), m_pass.encode())
+            try:
+                with self.connection:
+                    self.cur.execute(insert_query,{
+                        "key_title": title,
+                        "key_pass":enc.decode()
+                    }
+                    )
+                print()
+                print(f"[+]Stored Key for {title}")
+            except sqlite3.Error as error:
+                print("Failed to Insert Into Database", error)
+
+    def noteins(self, title=None): # Pylint: disable=W0613
+        master_pass= self.MasterPass
+        insert_query = """INSERT INTO notes (title,content)
+                            VALUES (:note_title ,:note_content)"""
+        m_pass = "shoaibislam"
+        if m_pass == master_pass:
+            if title is None:
+                title = input("Title:")
+
+            centext = "BODY [CTRL + D]"
+            eq = (self.termlines)
+            print(centext.center(eq))
+            note_content = "".join(sys.stdin.readlines())
+            contb64 = base64.b64encode(note_content.encode())
+            try:
+                with self.connection:
+                    self.cur.execute(insert_query,{
+                        "note_title": title,
+                        "note_content": contb64,
+                    }
+                    )
+                print()
+                print(f"[+]Note Added")
             except sqlite3.Error as error:
                 print("Failed to Insert Into Database", error)

@@ -44,7 +44,6 @@ parser = argparse.ArgumentParser(prog="ins",
                                  )
 
 flags = parser.add_argument_group('Command :', '')
-
 opt = parser.add_argument_group('Options :', '')
 
 
@@ -55,6 +54,8 @@ flags.add_argument("--rm","--remove",action="store_const",help="remove a credent
 flags.add_argument("--Ss","--search", metavar="" ,help="search trough credentials")
 flags.add_argument("-T","--touch", action="store_true", help="Add new credential")
 
+flags.add_argument("-K",'--keypass',nargs="?",const="None",help="Add Key")
+flags.add_argument("-N",'--note', nargs="?", const="None",help="Add Note")
 opt.add_argument("-U","--username",metavar="", help="Filter by Username")
 opt.add_argument("-A" ,"--appname",metavar="",help="Filter by Appname")
 opt.add_argument("-S" , "--sure" , action="store_true" ,help="Filter both we pass and username")
@@ -89,8 +90,22 @@ if args.ls:
         db.viewdb_base()
 
 
+if args.keypass:
+    if args.keypass == "None":
+        db.keyins()
+    else:
+        db.keyins(args.keypass)
+
 if args.touch:
     db.insert()
+
+if args.note:
+    if args.note == "None":
+        db.noteins()
+    else:
+        db.noteins(args.note)
+
+
 
 
 # if action == "help":
