@@ -74,9 +74,14 @@ class DatabaseManager:
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
-            # content_table = tools.print_box(row, m_pass)
-            for x, y in row:
-                print(x, base64.b64decode(y).decode())
+            # content_table = tools.print_box(row, m_pass) 
+            title = row[-1][0] 
+            note = base64.b64decode( (row[-1][1] )).decode()
+            # print(title)
+
+            tools.print_note(str(note),str(title))
+            # for x, y in row:
+                # print(x, base64.b64decode(y).decode())
 
     
 
@@ -132,9 +137,26 @@ class DatabaseManager:
             if title is None:
                 title = input("Title:")
 
-            centext = "BODY [CTRL + D]"
-            eq = (self.termlines)
-            print(centext.center(eq))
+            
+
+            centext = "BODY"
+            save_text = " [CTRL + D] "
+            discard = " [CTRL + C] "
+
+            eq = (self.termlines//2)-(len(save_text+centext+discard)//2)
+            last_put = " "*(eq)+centext+" "*(eq)
+
+            print("_"*self.termlines)
+           
+            print(discard,end="")
+            print(last_put,end="")
+            print(save_text,end="")
+
+            print("-"*self.termlines)
+
+
+
+
             note_content = "".join(sys.stdin.readlines())
             contb64 = base64.b64encode(note_content.encode())
             try:
