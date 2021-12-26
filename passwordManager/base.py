@@ -74,7 +74,8 @@ class DatabaseManager:
     def viewdb_base(self,username=None,appname=None,state="or"):
 
             if username is None and appname is None:
-                self.viewall()
+                # self.viewall()
+                print("Please Define A Service Parameter")
 
             elif username is not None or appname is not None:
                 
@@ -89,17 +90,52 @@ class DatabaseManager:
                     print(content_table)
 
 
-    def viewall(self):
+    def view_notes(self,order="ASC"):
+        master_pass = self.MasterPass
+        readquery = f"SELECT * FROM notes ORDER BY id {order};"
+        # m_pass = getpass.getpass("MasterKey: ")
+        m_pass = "shoaibislam"
+        if m_pass == master_pass :
+            row = self.dbfetch(readquery)
+            #print(row)
+
+            for x,y,z in row:
+                print("|",x,"|",y,"|",(base64.b64decode(z).decode()).strip(),"|")
+            # title = row[-1][0] 
+            # note = base64.b64decode( (row[-1][1] )).decode()
+
+            # tools.print_note(str(note),str(title),markdown=False)
+    
+    def view_keys(self):
+        master_pass = self.MasterPass
+        readquery = "SELECT * FROM keys;"
+        # m_pass = getpass.getpass("MasterKey: ")
+        m_pass = "shoaibislam"
+        if m_pass == master_pass :
+            row = self.dbfetch(readquery)
+            # content_table = tools.print_box(row, m_pass) 
+            # title = row[-1][0] 
+            # note = base64.b64decode( (row[-1][1] )).decode()
+            for x,y,z in row:
+                print("-"*40)
+                print(x,"|",y)
+
+            # tools.print_note(str(note),str(title),markdown=False)
+            # for x, y in row:
+                # print(x, base64.b64decode(y).decode())
+
+
+    def view_userpasses(self):
         master_pass = self.MasterPass
         readquery = "SELECT * FROM users;"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
-            # content_table = tools.print_box(row, m_pass)
-            # print(content_table)
-            for x in row:
-                print(x)
+            content_table = tools.print_box(row, m_pass)
+            print(content_table)
+
+
 
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
         master_pass= self.MasterPass
@@ -153,9 +189,26 @@ class DatabaseManager:
             if title is None:
                 title = input("Title:")
 
-            centext = "BODY [CTRL + D]"
-            eq = (self.termlines)
-            print(centext.center(eq))
+            
+
+            centext = "BODY"
+            save_text = " [CTRL + D] "
+            discard = " [CTRL + C] "
+
+            eq = (self.termlines//2)-(len(save_text+centext+discard)//2)
+            last_put = " "*(eq)+centext+" "*(eq)
+
+            print("_"*self.termlines)
+           
+            print(discard,end="")
+            print(last_put,end="")
+            print(save_text,end="")
+
+            print("-"*self.termlines)
+
+
+
+
             note_content = "".join(sys.stdin.readlines())
             contb64 = base64.b64encode(note_content.encode())
             try:
