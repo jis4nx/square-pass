@@ -65,8 +65,8 @@ opt.add_argument("-C","--copy",         action="store_true",                help
 opt.add_argument("-R",'--recent',       action="store_true",                help="Show recently modified credentials")
 opt.add_argument("-W",'--warn',         action="store_true",                help="warn about weak passwords")
 opt.add_argument("-i",'--index',        metavar="",           type=int,     help="Index for the credential update")
-opt.add_argument("-d",'--update',   dest="update",nargs="?", const="None",   help="Update your credential service name")
-opt.add_argument("-G", "--generate" ,nargs="?" , type=int, const=8  ,        help="Generate Advance & Strong Pass")
+opt.add_argument("-d",'--update',   dest="update",nargs="?", const="None",  help="Update your credential service name")
+opt.add_argument("-G", "--generate" ,  nargs="?" , type=int, const=8  ,     help="Generate Advance & Strong Pass")
 
 
 dan = parser.add_argument_group('Often Args :', '')
