@@ -49,19 +49,19 @@ opt = parser.add_argument_group('Options :', '')
 
 
 
-flags.add_argument("--ls","--showlist",action="store_const",help="Shows Credentials",const="all")
-flags.add_argument("--rm","--remove",action="store_const",help="remove a credential",const="3")
-flags.add_argument("--Ss","--search", metavar="" ,help="search trough credentials")
-flags.add_argument("-T","--touch", action="store_true", help="Add new credential")
+flags.add_argument("--ls","--showlist", nargs="?",            const="list", help="Shows Credentials")
+flags.add_argument("--rm","--remove",   action="store_const",               help="remove a credential",const="3")
+flags.add_argument("--Ss","--search",   action="store_true" , dest="search",help="search trough credentials")
+flags.add_argument("--pp","--touchs",   action="store_true",                help="Add new credential")
 
-flags.add_argument("-K",'--keypass',nargs="?",const="None",help="Add Key")
-flags.add_argument("-N",'--note', nargs="?", const="None",help="Add Note")
-opt.add_argument("-U","--username",metavar="", help="Filter by Username")
-opt.add_argument("-A" ,"--appname",metavar="",help="Filter by Appname")
-opt.add_argument("-S" , "--sure" , action="store_true" ,help="Filter both we pass and username")
-opt.add_argument("--c","--copy",action="store_true",help="Copy Pass to clip board")
-opt.add_argument("--r",'--recent',action="store_true",help="Show recently modified credentials")
-opt.add_argument("--w",'--warn',action="store_true",help="warn about weak passwords")
+opt.add_argument("-K",'--keypass',      metavar="",nargs="?", const="None", help="Add Key")
+opt.add_argument("-N",'--note',         metavar="",nargs="?", const="None", help="Add Note")
+opt.add_argument("-U","--username",     metavar="",                         help="Filter by Username")
+opt.add_argument("-A" ,"--appname",     metavar="",                         help="Filter by Appname")
+opt.add_argument("-S" , "--sure" ,      action="store_true" ,               help="Filter both we pass and username")
+opt.add_argument("-C","--copy",         action="store_true",                help="Copy Pass to clip board")
+opt.add_argument("-R",'--recent',       action="store_true",                help="Show recently modified credentials")
+opt.add_argument("-W",'--warn',         action="store_true",                help="warn about weak passwords")
 
 
 dan = parser.add_argument_group('Often Args :', '')
@@ -79,8 +79,29 @@ APPNAME = args.appname if args.appname else None
 
 
 
+def ls_list():
+    print("All")
+    print("Notes")
+    print("UserPass")
+    print("Keys")
+
+
 
 if args.ls:
+   
+
+    if args.ls == "UserPass":
+        db.view_userpasses()
+    elif args.ls == "Notes":
+        db.view_notes()
+    elif args.ls == "Keys":
+        db.view_keys()
+
+    else:
+        ls_list()
+
+
+if args.search:
     if args.sure:
         db.viewdb_base(username=USERNAME,appname=APPNAME,state="and")
 
@@ -96,7 +117,7 @@ if args.keypass:
     else:
         db.keyins(args.keypass)
 
-if args.touch:
+if args.pp:
     db.insert()
 
 if args.note:
@@ -104,6 +125,9 @@ if args.note:
         db.noteins()
     else:
         db.noteins(args.note)
+
+
+
 
 
 
