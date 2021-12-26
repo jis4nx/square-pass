@@ -1,5 +1,6 @@
 import sys
 from passwordManager import base
+from passwordManager import argaction
 import argparse
 
 from colorama import Fore
@@ -65,7 +66,7 @@ opt.add_argument("-R",'--recent',       action="store_true",                help
 opt.add_argument("-W",'--warn',         action="store_true",                help="warn about weak passwords")
 opt.add_argument("-i",'--index',        metavar="",           type=int,     help="Index for the credential update")
 opt.add_argument("-d",'--update',   dest="update",nargs="?", const="None",   help="Update your credential service name")
-
+opt.add_argument("-G", "--generate" ,nargs="?" , type=int, const=8  ,        help="Generate Advance & Strong Pass")
 
 
 dan = parser.add_argument_group('Often Args :', '')
@@ -87,6 +88,15 @@ def ls_list():
     print("Notes")
     print("UserPass")
     print("Keys")
+
+
+if args.generate:
+    passw = argaction.generate_password(args.generate)
+    
+    if args.copy:
+        argaction.copy_to_clipboard(passw)
+
+    print(passw)
 
 
 

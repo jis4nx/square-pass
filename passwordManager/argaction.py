@@ -1,11 +1,30 @@
 import pyperclip
+import string
+import random
 
 
 
 
 
-def whoryou(pass):
-    pass
+def generate_password(passlen,lc=50,nc=30,pc=20):
+    letters = list(string.ascii_letters)
+    puncs = ['$', '#', '_', '-', '!', '@', '+', '&', '(', ')', '?', '.', '*', '%']
+    digits = list(string.digits)
+
+    def percent(char,pers):
+        return int(pers*(char/100))
+
+    password = ""
+    password += "".join(random.choices(letters,k=percent(passlen,lc) ))
+    password += "".join(random.choices(puncs,k=percent(passlen,pc) ))
+    password += "".join(random.choices(digits,k=percent(passlen,nc)))
+
+    breh = list(password)
+    random.shuffle(breh)
+
+    return "".join(breh)
+
+
 
 
 
