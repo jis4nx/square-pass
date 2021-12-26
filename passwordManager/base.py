@@ -27,6 +27,28 @@ class DatabaseManager:
             except sqlite3.Error as err:
                 print(err)
 
+
+    def update(self,table="users", row=None, value=None, id=None):
+        if table == "users":
+            lst = ["app_name", "username", "passw"]
+        else:
+            lst = ["title", "key"]
+        userinp = [(input(str(x)+": ")).strip() for x in lst]
+        update_query = """UPDATE {}
+                        SET {}='{}'
+                        WHERE id={};"""
+        for idx, inp in enumerate(userinp):
+            if inp != "":
+                try:
+                    with self.connection:
+                        self.cur.execute(update_query.format(table, lst[idx],inp, id))
+                except sqlite3.Error as err:
+                    print(err)
+                    print(update_query.format(table, lst[idx],inp, id))
+            else:
+                pass
+
+        
     # def viewdb_by_appname(self,APP_NAME):
             # master_pass = self.MasterPass
             # app_name = APP_NAME
@@ -69,16 +91,15 @@ class DatabaseManager:
 
     def viewall(self):
         master_pass = self.MasterPass
-        readquery = "SELECT * FROM notes;"
+        readquery = "SELECT * FROM users;"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
             # content_table = tools.print_box(row, m_pass)
-            for x, y in row:
-                print(x, base64.b64decode(y).decode())
-
-    
+            # print(content_table)
+            for x in row:
+                print(x)
 
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
         master_pass= self.MasterPass
@@ -148,3 +169,24 @@ class DatabaseManager:
                 print(f"[+]Note Added")
             except sqlite3.Error as error:
                 print("Failed to Insert Into Database", error)
+
+
+
+    def bigbang(self,boom=False, userpass=None, keys=None, notes=None):
+        master_pass = self.MasterPass
+        if boom:
+            userpass=True
+            keys=True
+            notes=True
+        query = """DELETE FROM {}"""
+        if userpass is not None:
+            with self.connection:
+                self.cur.execute(query.format("users"))
+        if keys is not None:
+            with self.connection:
+                self.cur.execute(query.format("keys"))
+        if notes is not None:
+            with self.connection:
+                self.cur.execute(query.format("notes"))
+        
+

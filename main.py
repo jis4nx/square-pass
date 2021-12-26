@@ -62,11 +62,14 @@ opt.add_argument("-S" , "--sure" , action="store_true" ,help="Filter both we pas
 opt.add_argument("--c","--copy",action="store_true",help="Copy Pass to clip board")
 opt.add_argument("--r",'--recent',action="store_true",help="Show recently modified credentials")
 opt.add_argument("--w",'--warn',action="store_true",help="warn about weak passwords")
+opt.add_argument("-d",'--update',dest="update",nargs="?",const="None",help="Update your credential service name")
+opt.add_argument("-i",'--index',metavar="",type=int,help="Index for the credential update")
+
 
 
 dan = parser.add_argument_group('Often Args :', '')
 
-dan.add_argument("--bigbang",action="store_true",help="Erase all information")
+dan.add_argument("--bigbang",metavar="",help="Erase all information")
 
                     
 
@@ -106,22 +109,27 @@ if args.note:
         db.noteins(args.note)
 
 
+if args.bigbang:
+    if args.bigbang == "boom":
+        db.bigbang(boom=True)
+    elif args.bigbang == "userpass":
+        db.bigbang(userpass=True)
+    elif args.bigbang == "keys":
+        db.bigbang(keys=True)
+    elif args.bigbang == "notes":
+        db.bigbang(notes=True)
+    else:
+        pass
 
+if args.update:
+    if args.update == "None":
+        print("Available arguements: \nusers | keys")
+    else:
+        if args.index:
+            if args.update == "keys":
+                db.update(table="keys", id=args.index)
+            else:
+                db.update(id=args.index)
+        else:
+            print("Please define an index number")
 
-# if action == "help":
-    # print(DASH)
-# elif action == "add":
-    # db.insert()
-# elif action == "-a":
-    # act_name = sys.argv[2]
-    # print(act_name)
-    # db.viewdb_by_appname(act_name)
-# elif action == "-u":
-    # act_name = sys.argv[2]
-    # db.viewdb_by_username(act_name)
-
-# elif action == "showall":
-    # db.viewall()
-
-# else:
-    # print(action)
