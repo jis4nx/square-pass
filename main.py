@@ -91,14 +91,16 @@ def ls_list():
 
 
 if args.ls:
-   
-
+    sort = "date" if args.recent else "id"
+    order = "DESC" if args.recent else "ASC"
+    if args.recent:
+        print("HELLO")
     if args.ls == "UserPass":
-        db.view_userpasses()
+        db.view_userpasses(sort=sort, order=order)
     elif args.ls == "Notes":
-        db.view_notes()
+        db.view_notes(sort=sort, order=order)
     elif args.ls == "Keys":
-        db.view_keys()
+        db.view_keys(sort=sort, order=order)
 
     else:
         ls_list()
@@ -153,4 +155,6 @@ if args.update:
                 db.update(id=args.index)
         else:
             print("Please define an index number")
+
+
 

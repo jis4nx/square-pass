@@ -1,4 +1,4 @@
 pycryptodome==3.10.1
 prettytable==2.4.0
-colorama
-rich
+colorama==0.4.4
+rich==10.15.2

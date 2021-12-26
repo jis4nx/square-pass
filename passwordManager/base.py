@@ -20,59 +20,50 @@ class DatabaseManager:
             self.termlines = 100
 
     
-        def dbfetch(self, query, dict=None):
-            try:
-                with self.connection:
-                    if dict is None:
-                        self.cur.execute(query)
-                    else:
-                        self.cur.execute(query, dict)
-                    return self.cur.fetchall()
-            except sqlite3.Error as err:
-                print(err)
+    def dbfetch(self, query, dict=None):
+        try:
+            with self.connection:
+                if dict is None:
+                    self.cur.execute(query)
+                else:
+                    self.cur.execute(query, dict)
+                return self.cur.fetchall()
+        except sqlite3.Error as err:
+            print(err)
 
 
     def update(self,table="users", row=None, value=None, id=None):
+        master_pass = self.MasterPass
+        m_pass = "shoaibislam"
+
         if table == "users":
             lst = ["app_name", "username", "passw"]
         else:
             lst = ["title", "key"]
-        userinp = [(input(str(x)+": ")).strip() for x in lst]
-        update_query = """UPDATE {}
-                        SET {}='{}'
-                        WHERE id={};"""
+        userinp = []
+
+
+        for inp in lst:
+            if inp == "passw":
+                enc = encrypt(getpass.getpass(str(inp)).encode(), m_pass.encode()).decode()
+            else:
+                enc = input(str(inp))
+            userinp.append(enc)
+
+
         for idx, inp in enumerate(userinp):
             if inp != "":
                 try:
                     with self.connection:
-                        self.cur.execute(update_query.format(table, lst[idx],inp, id))
+                        # self.cur.execute(update_query.format(table, lst[idx], fr"{inp}", id))
+                        update_query = f"""UPDATE {table}
+                                            SET {lst[idx]} = '{inp}', date=datetime()
+                                        WHERE id={id};"""
+                        self.cur.execute(update_query)
                 except sqlite3.Error as err:
                     print(err)
-                    print(update_query.format(table, lst[idx],inp, id))
             else:
                 pass
-
-        
-    # def viewdb_by_appname(self,APP_NAME):
-            # master_pass = self.MasterPass
-            # app_name = APP_NAME
-            # readquery = "SELECT * FROM users WHERE app_name=:app_name;"
-            # m_pass = "shoaibislam"
-            # app_dict = {"app_name":app_name}
-            # if m_pass == master_pass :
-                # row = self.dbfetch(readquery, app_dict)
-                # content_table = tools.print_box(row, m_pass)
-                # print(content_table)
-
-    # def viewdb_by_username(self,user_name):
-            # master_pass = self.MasterPass
-            # readquery = "SELECT * FROM users WHERE username=:user_name;"
-            # m_pass = "shoaibislam"
-            # user_dict = {"user_name":user_name}
-            # if m_pass == master_pass:
-                # row = self.dbfetch(readquery, user_dict)
-                # content_table = tools.print_box(row, m_pass)
-                # print(content_table)
 
   
     def viewdb_base(self,username=None,appname=None,state="or"):
@@ -94,51 +85,36 @@ class DatabaseManager:
                     print(content_table)
 
 
-    def view_notes(self,order="ASC"):
+    def view_notes(self,sort="id",order="ASC"):
         master_pass = self.MasterPass
-        readquery = f"SELECT * FROM notes ORDER BY id {order};"
+        readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
-            #print(row)
+            for w,x,y,z in row:
+                print("|",w,"|",x,"|",(base64.b64decode(y).decode()).strip(),"|")
 
-            for x,y,z in row:
-                print("|",x,"|",y,"|",(base64.b64decode(z).decode()).strip(),"|")
-            # title = row[-1][0] 
-            # note = base64.b64decode( (row[-1][1] )).decode()
-
-            # tools.print_note(str(note),str(title),markdown=False)
     
-    def view_keys(self):
+    def view_keys(self, sort="id", order="ASC"):
         master_pass = self.MasterPass
-        readquery = "SELECT * FROM keys;"
-        # m_pass = getpass.getpass("MasterKey: ")
+        readquery = f"SELECT * FROM keys ORDER BY {sort} {reverse};"
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
-            # content_table = tools.print_box(row, m_pass) 
-            # title = row[-1][0] 
-            # note = base64.b64decode( (row[-1][1] )).decode()
-            for x,y,z in row:
-                print("-"*40)
-                print(x,"|",y)
-
-            # tools.print_note(str(note),str(title),markdown=False)
-            # for x, y in row:
-                # print(x, base64.b64decode(y).decode())
+            print("-"*40)
+            # print(x,"|",y)
 
 
-    def view_userpasses(self):
+    def view_userpasses(self, sort="id", order="ASC"):
         master_pass = self.MasterPass
-        readquery = "SELECT * FROM users;"
+        readquery = f"SELECT * FROM users ORDER BY {sort} {order};"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
             content_table = tools.print_box(row, m_pass)
             print(content_table)
-
 
 
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
@@ -186,31 +162,23 @@ class DatabaseManager:
 
     def noteins(self, title=None): # Pylint: disable=W0613
         master_pass= self.MasterPass
-        insert_query = """INSERT INTO notes (title,content)
-                            VALUES (:note_title ,:note_content)"""
+        insert_query = """INSERT INTO notes (title,content, date)
+                            VALUES (:note_title ,:note_content, datetime())"""
         m_pass = "shoaibislam"
         if m_pass == master_pass:
             if title is None:
                 title = input("Title:")
-
-            
-
             centext = "BODY"
             save_text = " [CTRL + D] "
             discard = " [CTRL + C] "
 
             eq = (self.termlines//2)-(len(save_text+centext+discard)//2)
             last_put = " "*(eq)+centext+" "*(eq)
-
             print("_"*self.termlines)
-           
             print(discard,end="")
             print(last_put,end="")
             print(save_text,end="")
-
             print("-"*self.termlines)
-
-
 
 
             note_content = "".join(sys.stdin.readlines())
@@ -246,4 +214,3 @@ class DatabaseManager:
             with self.connection:
                 self.cur.execute(query.format("notes"))
         
-

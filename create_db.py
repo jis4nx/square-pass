@@ -7,14 +7,16 @@ c.execute(""" CREATE TABLE
                 keys (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title text,
-                key text
+                key text,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP
     ) """)
 
 c.execute(""" CREATE TABLE
                 notes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title text,
-                content text
+                content text,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP
     ) """)
 
 
@@ -23,7 +25,8 @@ c.execute(""" CREATE TABLE
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 app_name text,
                 username text,
-                passw text
+                passw text,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP
     ) """)
 
 conn.commit()
