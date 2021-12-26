@@ -14,9 +14,13 @@ class DatabaseManager:
         self.MasterPass = MasterPass
         self.connection = sqlite3.connect("passwordmanager.db")
         self.cur = self.connection.cursor()
-        self.termlines = os.get_terminal_size().columns
+        try:
+            self.termlines = os.get_terminal_size().columns
+        except:
+            self.termlines = 100
 
-    def dbfetch(self, query, dict=None):
+    
+        def dbfetch(self, query, dict=None):
             try:
                 with self.connection:
                     if dict is None:
