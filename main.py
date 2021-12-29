@@ -1,9 +1,13 @@
 import sys
+import time
+t0 = time.time()
 from passwordManager import base
 from passwordManager import argaction
 import argparse
 
 from colorama import Fore
+t1 = time.time()
+print(t1-t0)
 
 green = Fore.GREEN
 white = Fore.WHITE
@@ -50,10 +54,10 @@ opt = parser.add_argument_group('Options :', '')
 
 
 
-flags.add_argument("--ls","--showlist", nargs="?",            const="list", help="Shows Credentials")
-flags.add_argument("--rm","--remove", dest="remove",  nargs="?",            const="list", help="remove a credential")
-flags.add_argument("--Ss","--search",   action="store_true" , dest="search",help="search trough credentials")
-flags.add_argument("--pp","--touchs",   action="store_true",                help="Add new credential")
+flags.add_argument("-ls","--showlist", nargs="?",            const="list", help="Shows Credentials")
+flags.add_argument("-rm","--remove", dest="remove",  nargs="?",            const="list", help="remove a credential")
+flags.add_argument("-Ss","--search",   action="store_true" , dest="search",help="search trough credentials")
+flags.add_argument("-pp","--touchs",   action="store_true",                help="Add new credential")
 
 
 opt.add_argument("-K",'--keypass',      metavar="",nargs="?", const="None", help="Add Key")
@@ -67,7 +71,7 @@ opt.add_argument("-W",'--warn',         action="store_true",                help
 opt.add_argument("-i",'--index',        metavar="",           type=int,     help="Index for the credential update")
 opt.add_argument("-d",'--update',   dest="update",nargs="?", const="None",  help="Update your credential service name")
 opt.add_argument("-G", "--generate" ,  nargs="?" , type=int, const=8  ,     help="Generate Advance & Strong Pass")
-
+opt.add_argument("-lsf",'--filedex',      metavar="", help="View File")
 
 dan = parser.add_argument_group('Often Args :', '')
 dan.add_argument("--bigbang",metavar="",help="Erase all information")
@@ -145,7 +149,7 @@ if args.remove:
 
 
 
-print(vars(args))
+# print(vars(args))
 
 
 
@@ -201,5 +205,12 @@ if args.update:
         else:
             print("Please define an index number")
 
-
-
+if args.filedex:
+    lsinp = args.filedex.split("/")
+    if lsinp[0] == "notes":
+        db.view_notes(noteid=int(lsinp[1]))
+    if lsinp[0] == "keys":
+        db.view_keys(keyid=int(lsinp[1]))
+    if lsinp[0] == "passw":
+        db.view_userpasses(userid=int(lsinp[1]))
+    

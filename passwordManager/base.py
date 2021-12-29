@@ -92,7 +92,7 @@ class DatabaseManager:
             readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
             print("breh")
         else:
-            readquery = f"SELECT * FROM notes WHERE id={noteid} ORDER BY {sort} {order};"
+            readquery = f"SELECT * FROM notes WHERE id={noteid};"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
@@ -116,9 +116,12 @@ class DatabaseManager:
 
 
                  
-    def view_keys(self, sort="id", order="ASC",reverse=False):
+    def view_keys(self, sort="id", order="ASC",keyid=None):
         master_pass = self.MasterPass
-        readquery = f"SELECT * FROM keys ORDER BY {sort} {order};"
+        if keyid is None:
+            readquery = f"SELECT * FROM keys ORDER BY {sort} {order};"
+        else:
+            readquery = f"SELECT * FROM keys WHERE id = {keyid};"
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
@@ -127,9 +130,12 @@ class DatabaseManager:
                 print(r[1],"|",r[2])
 
 
-    def view_userpasses(self, sort="id", order="ASC"):
+    def view_userpasses(self, sort="id", order="ASC", userid=None):
         master_pass = self.MasterPass
-        readquery = f"SELECT * FROM users ORDER BY {sort} {order};"
+        if userid is None:
+            readquery = f"SELECT * FROM users ORDER BY {sort} {order};"
+        else:
+            readquery = f"SELECT * FROM users WHERE id = {userid};"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
@@ -144,8 +150,8 @@ class DatabaseManager:
                             VALUES (:appname ,:u_name,:pass)"""
         m_pass = "shoaibislam"
         if m_pass == master_pass:
-            app_name = str(input("app_name :"))
-            u_name = str(input("Username: "))
+            app_name = input("app_name :")
+            u_name = input("Username: ")
             enc = encrypt(getpass.getpass("Password: ").encode(), m_pass.encode())
             try:
                 with self.connection:
