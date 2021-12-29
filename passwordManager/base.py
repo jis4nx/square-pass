@@ -85,25 +85,46 @@ class DatabaseManager:
                     print(content_table)
 
 
-    def view_notes(self,sort="id",order="ASC"):
+    def view_notes(self,sort="id",order="ASC" ,markdown=False,noteid=None):
         master_pass = self.MasterPass
-        readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
+
+        if noteid is None :
+            readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
+            print("breh")
+        else:
+            readquery = f"SELECT * FROM notes WHERE id={noteid} ORDER BY {sort} {order};"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
-            for w,x,y,z in row:
-                print("|",w,"|",x,"|",(base64.b64decode(y).decode()).strip(),"|")
+            if noteid == None:
+                for w,x,y,z in row:
+                    print("breh")
+                    #print("|",w,"|",x,"|",(base64.b64decode(y).decode()).strip(),"|")
 
-    
-    def view_keys(self, sort="id", order="ASC"):
+            else:
+                # print(row)
+                magicnum = row[0][0] 
+                title = row[0][1]
+                content = ((base64.b64decode(row[0][2])).decode()).strip()
+                subtitle= row[0][3]
+                
+                tools.print_note(content,title,subtitle)
+                # tools.print_note(row[])
+
+
+
+
+                 
+    def view_keys(self, sort="id", order="ASC",reverse=False):
         master_pass = self.MasterPass
-        readquery = f"SELECT * FROM keys ORDER BY {sort} {reverse};"
+        readquery = f"SELECT * FROM keys ORDER BY {sort} {order};"
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
             print("-"*40)
-            # print(x,"|",y)
+            for r in row:
+                print(r[1],"|",r[2])
 
 
     def view_userpasses(self, sort="id", order="ASC"):
@@ -194,6 +215,14 @@ class DatabaseManager:
                 print(f"[+]Note Added")
             except sqlite3.Error as error:
                 print("Failed to Insert Into Database", error)
+
+
+    def remove_cd(self,table=None,u_id=None):
+        
+        query = f"DELETE FROM {table} WHERE id={u_id}"
+
+        with self.connection:
+            self.cur.execute(query)
 
 
 

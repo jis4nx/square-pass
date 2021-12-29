@@ -51,7 +51,7 @@ opt = parser.add_argument_group('Options :', '')
 
 
 flags.add_argument("--ls","--showlist", nargs="?",            const="list", help="Shows Credentials")
-flags.add_argument("--rm","--remove",   action="store_const",               help="remove a credential",const="3")
+flags.add_argument("--rm","--remove", dest="remove",  nargs="?",            const="list", help="remove a credential")
 flags.add_argument("--Ss","--search",   action="store_true" , dest="search",help="search trough credentials")
 flags.add_argument("--pp","--touchs",   action="store_true",                help="Add new credential")
 
@@ -103,17 +103,52 @@ if args.generate:
 if args.ls:
     sort = "date" if args.recent else "id"
     order = "DESC" if args.recent else "ASC"
+    
     if args.recent:
         print("HELLO")
     if args.ls == "UserPass":
         db.view_userpasses(sort=sort, order=order)
     elif args.ls == "Notes":
-        db.view_notes(sort=sort, order=order)
+        if args.index :
+            db.view_notes(noteid=args.index)
+        else:
+            db.view_notes(sort=sort, order=order)
+   
     elif args.ls == "Keys":
         db.view_keys(sort=sort, order=order)
 
     else:
         ls_list()
+
+
+
+if args.remove:
+
+    if args.remove == "Userpass":
+        if args.index:
+            db.remove_cd(table="users",u_id=args.index)
+        else:
+            print("Please Define a index number")
+
+    elif args.remove == "Notes":
+        if args.index:
+            db.remove_cd(table="notes",u_id=args.index)
+        else:
+            print("Please Define a index number")
+    elif args.remove == "Keys":
+        if args.index:
+            db.remove_cd(table="keys",u_id=args.index)
+        else:
+            print("Please Define a index number")
+    else:
+        ls_list()
+
+
+
+print(vars(args))
+
+
+
 
 
 if args.search:

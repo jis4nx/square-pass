@@ -13,7 +13,7 @@ from rich.layout import Layout
 
 
 
-def print_note(note,title,markdown=True):
+def print_note(note,title,sub,markdown=True):
 
     console = Console()
     layout = Layout()
@@ -26,6 +26,7 @@ def print_note(note,title,markdown=True):
                 padding=(1, 2),
                 title=f"[b red]{title}",
                 border_style="bright_blue",
+                subtitle=sub
             )
 
     console.print(styles)
