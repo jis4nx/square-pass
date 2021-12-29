@@ -166,7 +166,7 @@ class DatabaseManager:
                 print("Failed to Insert Into Database", error)
 
 
-    def keyins(self, title=None): # Pylint: disable=W0613
+    def keyins(self, title=None, silent=True): # Pylint: disable=W0613
         master_pass= self.MasterPass
         insert_query = """INSERT INTO keys (title, key)
                             VALUES (:key_title ,:key_pass)"""
@@ -174,7 +174,10 @@ class DatabaseManager:
         if m_pass == master_pass:
             if title is None:
                 title = input("Title :")
-            enc = encrypt(getpass.getpass("Key: ").encode(), m_pass.encode())
+            if silent:
+                enc = encrypt(getpass.getpass("Key: ").encode(), m_pass.encode())
+            else:
+                enc = encrypt(input("Key: ").encode(), m_pass.encode())
             try:
                 with self.connection:
                     self.cur.execute(insert_query,{

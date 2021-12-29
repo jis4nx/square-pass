@@ -54,10 +54,10 @@ opt = parser.add_argument_group('Options :', '')
 
 
 
-flags.add_argument("-ls","--showlist", nargs="?",            const="list", help="Shows Credentials")
-flags.add_argument("-rm","--remove", dest="remove",  nargs="?",            const="list", help="remove a credential")
-flags.add_argument("-Ss","--search",   action="store_true" , dest="search",help="search trough credentials")
-flags.add_argument("-pp","--touchs",   action="store_true",                help="Add new credential")
+flags.add_argument("--ls","--showlist", nargs="?",            const="list", help="Shows Credentials")
+flags.add_argument("--rm","--remove", dest="remove",  nargs="?",            const="list", help="remove a credential")
+flags.add_argument("--s","--silent",   action="store_true",help="search trough credentials")
+flags.add_argument("--pp","--touchs",   action="store_true",                help="Add new credential")
 
 
 opt.add_argument("-K",'--keypass',      metavar="",nargs="?", const="None", help="Add Key")
@@ -155,21 +155,22 @@ if args.remove:
 
 
 
-if args.search:
-    if args.sure:
-        db.viewdb_base(username=USERNAME,appname=APPNAME,state="and")
+# if args.search:
+#     if args.sure:
+#         db.viewdb_base(username=USERNAME,appname=APPNAME,state="and")
 
-    elif args.appname or args.username:
-        db.viewdb_base(username=USERNAME,appname=APPNAME)
-    else:
-        db.viewdb_base()
+#     elif args.appname or args.username:
+#         db.viewdb_base(username=USERNAME,appname=APPNAME)
+#     else:
+#         db.viewdb_base()
 
 
 if args.keypass:
+    silent = False if args.s else True
     if args.keypass == "None":
-        db.keyins()
+        db.keyins(silent=silent)
     else:
-        db.keyins(args.keypass)
+        db.keyins(title=args.keypass, silent=silent)
 
 if args.pp:
     db.insert()
