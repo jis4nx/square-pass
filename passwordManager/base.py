@@ -90,7 +90,6 @@ class DatabaseManager:
 
         if noteid is None :
             readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
-            print("breh")
         else:
             readquery = f"SELECT * FROM notes WHERE id={noteid};"
         # m_pass = getpass.getpass("MasterKey: ")
@@ -99,17 +98,19 @@ class DatabaseManager:
             row = self.dbfetch(readquery)
             if noteid == None:
                 for w,x,y,z in row:
-                    print("breh")
-                    #print("|",w,"|",x,"|",(base64.b64decode(y).decode()).strip(),"|")
+                    print("|",w,"|",x,"|",(base64.b64decode(y).decode()).strip(),"|")
 
             else:
                 # print(row)
-                magicnum = row[0][0] 
-                title = row[0][1]
-                content = ((base64.b64decode(row[0][2])).decode()).strip()
-                subtitle= row[0][3]
-                
-                tools.print_note(content,title,subtitle)
+                try:
+                    magicnum = row[0][0] 
+                    title = row[0][1]
+                    content = ((base64.b64decode(row[0][2])).decode()).strip()
+                    subtitle= row[0][3]
+                    
+                    tools.print_note(content,title,subtitle)
+                except IndexError:
+                    print("Not Available")
                 # tools.print_note(row[])
 
 
@@ -125,9 +126,12 @@ class DatabaseManager:
         m_pass = "shoaibislam"
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
-            print("-"*40)
-            for r in row:
-                print(r[1],"|",r[2])
+            if len(row) < 1:
+                print("Not Available")
+            else:
+                print("-"*40)
+                for r in row:
+                    print(r[1],"|",r[2])
 
 
     def view_userpasses(self, sort="id", order="ASC", userid=None):
@@ -150,7 +154,7 @@ class DatabaseManager:
                             VALUES (:appname ,:u_name,:pass)"""
         m_pass = "shoaibislam"
         if m_pass == master_pass:
-            app_name = input("app_name :")
+            app_name = input("App Name:")
             u_name = input("Username: ")
             enc = encrypt(getpass.getpass("Password: ").encode(), m_pass.encode())
             try:
