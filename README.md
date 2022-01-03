@@ -12,6 +12,7 @@
 <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/square-pass">
 
 </center>
+
 ---
 
 With square-pass you can store your passwords, keys and notes safely on your local machine .
