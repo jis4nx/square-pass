@@ -5,6 +5,7 @@
 **<p align="center">  square-pass Is An Open Source Cross platform Password Manager written in python  </p>**
 
 <center>
+  
 <img alt="GitHub" src="https://img.shields.io/github/license/jis4nx/square-pass">
 <img alt="PyPI" src="https://img.shields.io/pypi/v/square-pass">
 <img alt="Arch Linux package" src="https://img.shields.io/archlinux/v/square-pass/x86_64/yay">
