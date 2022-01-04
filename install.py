@@ -1,6 +1,6 @@
 import os, getpass
 import platform
-from passwordManager.ciphers import encrypt,decrypt, finalhash 
+from passwordManager.ciphers import finalhash 
 
 # os.system("python -m pip install -r requirements.txt")
 # os.system("python create_db.py")

@@ -21,11 +21,11 @@ c.execute(""" CREATE TABLE
 
 
 c.execute(""" CREATE TABLE
-                users (
+                passw (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 app_name text,
                 username text,
-                passw text,
+                passwd text,
                 date DATETIME DEFAULT CURRENT_TIMESTAMP
     ) """)
 

@@ -50,11 +50,11 @@ opt = parser.add_argument_group('Options :', '')
 
 
 
-opt.add_argument("-U",'--update',       dest="update",metavar="",                           help="Update your credential service name")
+opt.add_argument("-U",'--update',       dest="update",metavar="",                           help="Update your credential with service name")
 opt.add_argument("-cat",'--cat',    dest="cat",metavar="", help="View File")
-flags.add_argument("--ls","--showlist", dest="showlist",nargs="?",            const="list", help="Shows Credentials")
+flags.add_argument("--ls","--showlist", dest="showlist",nargs="?",            const="list", help="Shows Credential")
 flags.add_argument("--rm","--remove",   dest="remove",  metavar="",                         help="remove a credential")
-flags.add_argument("-s","--silent",     dest="silent",action="store_true",                  help="search trough credentials")
+flags.add_argument("-n","--normal",     dest="normal",action="store_true",                  help="Show key while typing")
 
 #Insert
 flags.add_argument("-P","--passw",      dest="passw",action="store_true",                   help="Add new credential")
@@ -64,38 +64,39 @@ opt.add_argument("-N",'--note',         dest="note",metavar="",nargs="?", const=
 # Filter 
 opt.add_argument("-u","--username",     dest="username",metavar="",                         help="Filter by Username")
 opt.add_argument("-a" ,"--appname",     dest="appname",metavar="",                          help="Filter by Appname")
-opt.add_argument("-b" , "--bp" ,        dest="user_pass",action="store_true" ,              help="Filter both we pass and username")
+opt.add_argument("-b" , "--bp" ,        dest="user_pass",action="store_true" ,              help="Filter by both username and password")
 # opt.add_argument("-i",'--index',        dest="index",metavar="",           type=int,        help="Index for the credential update")
 
 # Opt args
-opt.add_argument("-c","--copy",         dest="copy",action="store_true",                    help="Copy Pass to clip board")
+opt.add_argument("-c","--copy",         dest="copy",action="store_true",                    help="Copy to clipboard")
 opt.add_argument("-r",'--recent',       dest="recent",action="store_true",                  help="Show recently modified credentials")
 # opt.add_argument("-W",'--warn',         action="store_true",                help="warn about weak passwords")
 
 #Extra Args
 
 dan = parser.add_argument_group('Often Args :', '')
-dan.add_argument("--bigbang",           dest="bigbang",metavar="",                          help="Erase all information")
+dan.add_argument("--bigbang",           dest="bigbang",metavar="[boom | passw | keys | notes]",                          help="Erase Service information")
 opt.add_argument("-g", "--gen" ,        dest="generate",nargs="?" , type=int, const=8  ,    help="Generate Advance & Strong Pass")
                     
 
 
 args = parser.parse_args()
 
-services = ["notes", "userpass", "keys"]
+services = ["passw", "notes", "keys"]
 
  
 if args.passw:
     db.insert()
 
 if args.keypass:
+    mode = False if args.normal else True
     if args.keypass == "None":
-        db.keyins()
+        db.keyins(silent=mode)
     else:
-        db.keyins(args.keypass)
+        db.keyins(args.keypass, silent=mode)
+
 
 if args.note:
-
     if args.note == "None":
         db.noteins()
     else:
@@ -114,7 +115,7 @@ if args.generate:
 
 if args.cat:
     try :
-        idx = args.cat.split("/")[1]
+        idx = int(args.cat.split("/")[1])
         service = args.cat.split("/")[0]
         if service == "notes":
             db.view_notes(noteid=idx)
@@ -124,8 +125,7 @@ if args.cat:
             db.view_userpasses(userid=idx)
         else:
             print("Availables: "," | ".join(services))
-    except IndexError as err:
-        print(err)
+    except (IndexError, ValueError):
         print("Usage: sq -cat service/index")
 
 
@@ -133,7 +133,7 @@ if args.showlist:
     sort = "date" if args.recent else "id"
     order = "DESC" if args.recent else "ASC"
 
-    if args.showlist == "userpass":
+    if args.showlist == "passw":
         db.view_userpasses(sort=sort, order=order)
     elif args.showlist == "notes":
         db.view_notes(sort=sort, order=order)
@@ -148,12 +148,12 @@ if args.showlist:
 
 if args.remove:
     try:
-        service_name = args.findex.split("/")[0]
-        ind = int(args.findex.split("/")[1])
+        service_name = args.remove.split("/")[0]
+        ind = int(args.remove.split("/")[1])
         try :
             db.remove_cd(table=service_name,u_id=ind)
         except KeyError:
-            print("Available arguements: \nusers | keys | notes")
+            print("Available args:", " | ".join(services))
     except IndexError:
         print("Usage: sq --rm service/index")
 
@@ -162,20 +162,20 @@ if args.bigbang:
     if args.bigbang == "boom":
         db.bigbang(boom=True)
 
-    elif args.bigbang == "userpass":
+    elif args.bigbang == "passw":
         db.bigbang(userpass=True)
     elif args.bigbang == "keys":
         db.bigbang(keys=True)
     elif args.bigbang == "notes":
         db.bigbang(notes=True)
     else:
-        pass
+        print("Available args: \nboom | passw | keys | notes")
 
 
 
 if args.update:
-    service_name = args.findex.split("/")[0] 
-    ind = int(args.findex.split("/")[1])
+    service_name = args.update.split("/")[0] 
+    ind = int(args.update.split("/")[1])
     try :
         db.update(table=service_name,id=ind)
     

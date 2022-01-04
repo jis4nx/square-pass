@@ -1,11 +1,11 @@
 import sqlite3
 import getpass
-from passwordManager.ciphers import encrypt
-from passwordManager import tools
-import base64
 import sys
 import os
-
+import base64
+from passwordManager.ciphers import encrypt,decrypt
+from passwordManager import tools
+from prettytable import PrettyTable
 
 class DatabaseManager:
     """ Class Doc Goes Here"""
@@ -32,22 +32,26 @@ class DatabaseManager:
             print(err)
 
 
-    def update(self,table="users", row=None, value=None, id=None):
+    def update(self,table="passw", row=None, value=None, id=None):
         master_pass = self.MasterPass
         m_pass = "shoaibislam"
 
-        if table == "users":
-            lst = ["app_name", "username", "passw"]
+        if table == "passw":
+            lst = ["app_name", "username", "passwd"]
+            lstinp = ["App Name: ", "Username: ", "Password: "]
         else:
             lst = ["title", "key"]
+            lstinp = ["Title: ", "Key: "]
         userinp = []
 
 
-        for inp in lst:
-            if inp == "passw":
-                enc = encrypt(getpass.getpass(str(inp)).encode(), m_pass.encode()).decode()
+        for idxlst, inp in enumerate(lst):
+            if inp == "passwd":
+                inpass = getpass.getpass(lstinp[idxlst])
+                enc = encrypt(getpass.getpass(lstinp[idxlst]).encode(), m_pass.encode()).decode() if inpass != "" else ""
+
             else:
-                enc = input(str(inp))
+                enc = input(lstinp[idxlst])
             userinp.append(enc)
 
 
@@ -55,7 +59,6 @@ class DatabaseManager:
             if inp != "":
                 try:
                     with self.connection:
-                        # self.cur.execute(update_query.format(table, lst[idx], fr"{inp}", id))
                         update_query = f"""UPDATE {table}
                                             SET {lst[idx]} = '{inp}', date=datetime()
                                         WHERE id={id};"""
@@ -66,6 +69,25 @@ class DatabaseManager:
                 pass
 
   
+    def count(self, table=None, column=None, cred=None):
+        master_pass = self.MasterPass
+        m_pass = "shoaibislam"
+        if m_pass == master_pass:
+            readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
+            if column == "passwd":
+                passlist = []
+                row = self.dbfetch("SELECT passwd FROM passw;")
+                for x in row:
+                    decipher = decrypt(x[0], master_pass.encode()).decode()
+                    passlist.append(decipher)
+                print(passlist.count(cred))
+            elif column == "username":
+                row = self.dbfetch(readquery.format(table, column, cred))
+                print(row[0][0])
+            else:
+                print("Count only availeable for username and password")
+                
+
     def viewdb_base(self,username=None,appname=None,state="or"):
 
             if username is None and appname is None:
@@ -75,7 +97,7 @@ class DatabaseManager:
             elif username is not None or appname is not None:
                 
                 master_pass = self.MasterPass
-                readquery = f"SELECT * FROM users WHERE username=:user_name {state} app_name=:appname;"
+                readquery = f"SELECT * FROM passw WHERE username=:user_name {state} app_name=:appname;"
             
                 m_pass = "shoaibislam"
                 user_dict = {"user_name":username,"appname":appname}
@@ -97,11 +119,13 @@ class DatabaseManager:
         if m_pass == master_pass :
             row = self.dbfetch(readquery)
             if noteid == None:
-                for w,x,y,z in row:
-                    print("|",w,"|",x,"|",(base64.b64decode(y).decode()).strip(),"|")
+                notes = PrettyTable()
+                notes.field_names = ["Index", "Title", "Content"]
+                for idx,title,cont,dtime in row:
+                    notes.add_row([idx, title, base64.b64decode(cont).decode()[:10]+"..."])
+                print(notes)
 
             else:
-                # print(row)
                 try:
                     magicnum = row[0][0] 
                     title = row[0][1]
@@ -111,9 +135,6 @@ class DatabaseManager:
                     tools.print_note(content,title,subtitle)
                 except IndexError:
                     print("Not Available")
-                # tools.print_note(row[])
-
-
 
 
                  
@@ -129,17 +150,22 @@ class DatabaseManager:
             if len(row) < 1:
                 print("Not Available")
             else:
-                print("-"*40)
+                keys = PrettyTable()
+                keys.field_names = ["Index", "Title", "Key"]
                 for r in row:
-                    print(r[1],"|",r[2])
+                    decipher = decrypt(r[2], master_pass.encode()).decode()
+                    keys.add_row([r[0], r[1], decipher])
+                keys.sortby = "Key"
+                print(keys)
+                print(keys.get_json_string())
 
 
-    def view_userpasses(self, sort="id", order="ASC", userid=None):
+    def view_userpasses(self, sort="id", order="ASC", userid=None, countpass=False):
         master_pass = self.MasterPass
         if userid is None:
-            readquery = f"SELECT * FROM users ORDER BY {sort} {order};"
+            readquery = f"SELECT * FROM passw ORDER BY {sort} {order};"
         else:
-            readquery = f"SELECT * FROM users WHERE id = {userid};"
+            readquery = f"SELECT * FROM passw WHERE id = {userid};"
         # m_pass = getpass.getpass("MasterKey: ")
         m_pass = "shoaibislam"
         if m_pass == master_pass :
@@ -147,10 +173,9 @@ class DatabaseManager:
             content_table = tools.print_box(row, m_pass)
             print(content_table)
 
-
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
         master_pass= self.MasterPass
-        insert_query = """INSERT INTO users (app_name,username, passw)
+        insert_query = """INSERT INTO passw (app_name,username, passwd)
                             VALUES (:appname ,:u_name,:pass)"""
         m_pass = "shoaibislam"
         if m_pass == master_pass:
@@ -177,7 +202,7 @@ class DatabaseManager:
         m_pass = "shoaibislam"
         if m_pass == master_pass:
             if title is None:
-                title = input("Title :")
+                title = input("Title: ")
             if silent:
                 enc = encrypt(getpass.getpass("Key: ").encode(), m_pass.encode())
             else:
@@ -193,6 +218,8 @@ class DatabaseManager:
                 print(f"[+]Stored Key for {title}")
             except sqlite3.Error as error:
                 print("Failed to Insert Into Database", error)
+
+
 
     def noteins(self, title=None): # Pylint: disable=W0613
         master_pass= self.MasterPass
@@ -248,7 +275,7 @@ class DatabaseManager:
         query = """DELETE FROM {}"""
         if userpass is not None:
             with self.connection:
-                self.cur.execute(query.format("users"))
+                self.cur.execute(query.format("passw"))
         if keys is not None:
             with self.connection:
                 self.cur.execute(query.format("keys"))
@@ -256,3 +283,5 @@ class DatabaseManager:
             with self.connection:
                 self.cur.execute(query.format("notes"))
         
+
+
