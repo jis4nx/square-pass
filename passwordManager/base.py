@@ -69,42 +69,47 @@ class DatabaseManager:
                 pass
 
   
-    def count(self, table=None, column=None, cred=None):
+    def count(self,icase=False, table=None, column=None, cred=None):
         master_pass = self.MasterPass
         m_pass = "shoaibislam"
         if m_pass == master_pass:
             readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
-            if column == "passwd":
-                passlist = []
-                row = self.dbfetch("SELECT passwd FROM passw;")
-                for x in row:
-                    decipher = decrypt(x[0], master_pass.encode()).decode()
-                    passlist.append(decipher)
-                print(passlist.count(cred))
-            elif column == "username":
-                row = self.dbfetch(readquery.format(table, column, cred))
-                print(row[0][0])
+            try:
+                if column == "passwd":
+                    passlist = []
+                    row = self.dbfetch("SELECT passwd FROM passw;")
+                    for x in row:
+                        decipher = decrypt(x[0], master_pass.encode()).decode()
+                        passlist.append(decipher)
+                    print(passlist.count(cred))
+
+                else:
+                    if icase:
+                        readquery = "SELECT COUNT(*) FROM {} WHERE {} = lower('{}');"
+                    else:
+                        readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
+                    row = self.dbfetch(readquery.format(table, column, cred))
+                    print(row[0][0])
+
+            except Exception as err:
+                print(err)
+                
+
+    def filter(self,icase=False,username=None,appname=None,state="or"):
+        if username is None and appname is None:
+            print("Please Define A Service Parameter")
+        elif username is not None or appname is not None:
+            master_pass = self.MasterPass
+            m_pass = "shoaibislam"
+            if icase:
+                readquery = """SELECT * FROM passw WHERE username = lower('{}') {} app_name = lower('{}');"""
             else:
-                print("Count only availeable for username and password")
-                
+                readquery = """SELECT * FROM passw WHERE username = '{}' {} app_name = '{}';"""
+                # user_dict = {"user_name":username,"appname":appname}
+            row = self.dbfetch(readquery.format(username, state, appname))
+            content_table = tools.print_box(row, m_pass)
+            print(content_table)
 
-    def viewdb_base(self,username=None,appname=None,state="or"):
-
-            if username is None and appname is None:
-                # self.viewall()
-                print("Please Define A Service Parameter")
-
-            elif username is not None or appname is not None:
-                
-                master_pass = self.MasterPass
-                readquery = f"SELECT * FROM passw WHERE username=:user_name {state} app_name=:appname;"
-            
-                m_pass = "shoaibislam"
-                user_dict = {"user_name":username,"appname":appname}
-                if m_pass == master_pass:
-                    row = self.dbfetch(readquery, user_dict)
-                    content_table = tools.print_box(row, m_pass)
-                    print(content_table)
 
 
     def view_notes(self,sort="id",order="ASC" ,markdown=False,noteid=None):
@@ -157,7 +162,6 @@ class DatabaseManager:
                     keys.add_row([r[0], r[1], decipher])
                 keys.sortby = "Key"
                 print(keys)
-                print(keys.get_json_string())
 
 
     def view_userpasses(self, sort="id", order="ASC", userid=None, countpass=False):
