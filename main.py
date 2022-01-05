@@ -124,7 +124,6 @@ if args.count:
 if args.showlist:
     sort = "date" if args.recent else "id"
     order = "DESC" if args.recent else "ASC"
-    mode = True if args.ignorecase else False
     if args.username:
         db.filter(icase=mode,username=args.username)
     elif args.appname:
