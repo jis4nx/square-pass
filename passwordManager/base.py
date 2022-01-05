@@ -48,7 +48,7 @@ class DatabaseManager:
         for idxlst, inp in enumerate(lst):
             if inp == "passwd":
                 inpass = getpass.getpass(lstinp[idxlst])
-                enc = encrypt(getpass.getpass(lstinp[idxlst]).encode(), m_pass.encode()).decode() if inpass != "" else ""
+                enc = encrypt(inpass.encode(), m_pass.encode()).decode() if inpass != "" else ""
 
             else:
                 enc = input(lstinp[idxlst])
