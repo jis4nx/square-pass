@@ -29,7 +29,7 @@ square-pass makes your life easier .
 Square-pass in bullet speed :
   - Uses AES-256 Secure Encryption System 
   - Stores Passwords
-  - Stores Kyes & Numbers
+  - Stores Keys & Numbers
   - Stores Quick Notes
   - Clipboard Support
   - Generates Secure Passwords
