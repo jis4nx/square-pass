@@ -22,4 +22,8 @@ def finalhash(msg, masterkey):
     encd = base64.b64encode(IV + cipher.encrypt(msg))
     return hashlib.sha256(encd).hexdigest()
 
-
+def hashuser(masterkey):
+    salt = 'xx01'
+    keysalt = (masterkey[-4:]+ salt) * 2
+    hashed_mpass = finalhash(masterkey.encode(), keysalt.encode())
+    return hashed_mpass

@@ -3,6 +3,7 @@ import getpass
 import sys
 import os
 import base64
+import platform
 from passwordManager.ciphers import encrypt,decrypt
 from passwordManager import tools
 from prettytable import PrettyTable
@@ -10,8 +11,20 @@ from prettytable import PrettyTable
 class DatabaseManager:
     """ Class Doc Goes Here"""
 
-    def __init__(self,MasterPass):
-        self.MasterPass = MasterPass
+    def readpass(self):
+        linuxdir = os.path.expanduser("~/.local/share/pass.key")
+        windir = os.path.expanduser("~\\AppData\\pass.key")
+        sysname = platform.system()
+        pathname = linuxdir if sysname == "Linux" else windir
+        with open(pathname, "r") as file:
+            return file.read()
+
+    def __init__(self,MasterPass, cryptedpass):
+        self.User_Masterpass = self.readpass()
+        check_pass = True if self.User_Masterpass == cryptedpass else False
+        self.cryptedpass = cryptedpass if check_pass else None
+        self.MasterPass = MasterPass if check_pass else None
+        if not check_pass: print("Not matched")
         self.connection = sqlite3.connect("passwordmanager.db")
         self.cur = self.connection.cursor()
         try:
@@ -19,7 +32,7 @@ class DatabaseManager:
         except:
             self.termlines = 100
 
-    
+
     def dbfetch(self, query, dict=None):
         try:
             with self.connection:
@@ -33,46 +46,45 @@ class DatabaseManager:
 
 
     def update(self,table="passw", row=None, value=None, id=None):
-        master_pass = self.MasterPass
-        m_pass = "shoaibislam"
-
-        if table == "passw":
-            lst = ["app_name", "username", "passwd"]
-            lstinp = ["App Name: ", "Username: ", "Password: "]
-        else:
-            lst = ["title", "key"]
-            lstinp = ["Title: ", "Key: "]
-        userinp = []
-
-
-        for idxlst, inp in enumerate(lst):
-            if inp == "passwd":
-                inpass = getpass.getpass(lstinp[idxlst])
-                enc = encrypt(inpass.encode(), m_pass.encode()).decode() if inpass != "" else ""
-
+        local_pass = self.User_Masterpass
+        if self.cryptedpass == self.User_Masterpass:
+            if table == "passw":
+                lst = ["app_name", "username", "passwd"]
+                lstinp = ["App Name: ", "Username: ", "Password: "]
             else:
-                enc = input(lstinp[idxlst])
-            userinp.append(enc)
+                lst = ["title", "key"]
+                lstinp = ["Title: ", "Key: "]
+            userinp = []
 
 
-        for idx, inp in enumerate(userinp):
-            if inp != "":
-                try:
-                    with self.connection:
-                        update_query = f"""UPDATE {table}
-                                            SET {lst[idx]} = '{inp}', date=datetime()
-                                        WHERE id={id};"""
-                        self.cur.execute(update_query)
-                except sqlite3.Error as err:
-                    print(err)
-            else:
-                pass
+            for idxlst, inp in enumerate(lst):
+                if inp == "passwd":
+                    inpass = getpass.getpass(lstinp[idxlst])
+                    enc = encrypt(inpass.encode(), local_pass.encode()).decode() if inpass != "" else ""
+
+                else:
+                    enc = input(lstinp[idxlst])
+                userinp.append(enc)
+
+
+            for idx, inp in enumerate(userinp):
+                if inp != "":
+                    try:
+                        with self.connection:
+                            update_query = f"""UPDATE {table}
+                                                SET {lst[idx]} = '{inp}', date=datetime()
+                                            WHERE id={id};"""
+                            self.cur.execute(update_query)
+                    except sqlite3.Error as err:
+                        print(err)
+                else:
+                    pass
 
   
     def count(self,icase=False, table=None, column=None, cred=None):
         master_pass = self.MasterPass
-        m_pass = "shoaibislam"
-        if m_pass == master_pass:
+        local_pass = self.User_Masterpass
+        if local_pass == master_pass:
             readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
             try:
                 if column == "passwd":
@@ -99,58 +111,53 @@ class DatabaseManager:
         if username is None and appname is None:
             print("Please Define A Service Parameter")
         elif username is not None or appname is not None:
-            master_pass = self.MasterPass
-            m_pass = "shoaibislam"
+            local_pass = self.User_Masterpass
             if icase:
                 readquery = """SELECT * FROM passw WHERE username = lower('{}') {} app_name = lower('{}');"""
             else:
                 readquery = """SELECT * FROM passw WHERE username = '{}' {} app_name = '{}';"""
                 # user_dict = {"user_name":username,"appname":appname}
             row = self.dbfetch(readquery.format(username, state, appname))
-            content_table = tools.print_box(row, m_pass)
+            content_table = tools.print_box(row, local_pass)
             print(content_table)
 
 
 
     def view_notes(self,sort="id",order="ASC" ,markdown=False,noteid=None):
-        master_pass = self.MasterPass
-
-        if noteid is None :
-            readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
-        else:
-            readquery = f"SELECT * FROM notes WHERE id={noteid};"
-        # m_pass = getpass.getpass("MasterKey: ")
-        m_pass = "shoaibislam"
-        if m_pass == master_pass :
-            row = self.dbfetch(readquery)
-            if noteid == None:
-                notes = PrettyTable()
-                notes.field_names = ["Index", "Title", "Content"]
-                for idx,title,cont,dtime in row:
-                    notes.add_row([idx, title, base64.b64decode(cont).decode()[:10]+"..."])
-                print(notes)
-
+        if self.cryptedpass == self.User_Masterpass:
+            if noteid is None :
+                readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
             else:
-                try:
-                    magicnum = row[0][0] 
-                    title = row[0][1]
-                    content = ((base64.b64decode(row[0][2])).decode()).strip()
-                    subtitle= row[0][3]
-                    
-                    tools.print_note(content,title,subtitle)
-                except IndexError:
-                    print("Not Available")
+                readquery = f"SELECT * FROM notes WHERE id={noteid};"
+            if self.cryptedpass == self.User_Masterpass:
+                row = self.dbfetch(readquery)
+                if noteid == None:
+                    notes = PrettyTable()
+                    notes.field_names = ["Index", "Title", "Content"]
+                    for idx,title,cont,dtime in row:
+                        notes.add_row([idx, title, base64.b64decode(cont).decode()[:10]+"..."])
+                    print(notes)
+
+                else:
+                    try:
+                        magicnum = row[0][0] 
+                        title = row[0][1]
+                        content = ((base64.b64decode(row[0][2])).decode()).strip()
+                        subtitle= row[0][3]
+                        
+                        tools.print_note(content,title,subtitle)
+                    except IndexError:
+                        print("Not Available")
 
 
                  
-    def view_keys(self, sort="id", order="ASC",keyid=None):
-        master_pass = self.MasterPass
+    def view_keys(self, sort="id", order="ASC",keyid=None, export=False):
+        local_pass = self.MasterPass
         if keyid is None:
             readquery = f"SELECT * FROM keys ORDER BY {sort} {order};"
         else:
             readquery = f"SELECT * FROM keys WHERE id = {keyid};"
-        m_pass = "shoaibislam"
-        if m_pass == master_pass :
+        if self.cryptedpass == self.User_Masterpass:
             row = self.dbfetch(readquery)
             if len(row) < 1:
                 print("Not Available")
@@ -158,34 +165,34 @@ class DatabaseManager:
                 keys = PrettyTable()
                 keys.field_names = ["Index", "Title", "Key"]
                 for r in row:
-                    decipher = decrypt(r[2], master_pass.encode()).decode()
+                    decipher = decrypt(r[2], local_pass.encode()).decode()
                     keys.add_row([r[0], r[1], decipher])
-                keys.sortby = "Key"
+                if export:
+                    return keys
                 print(keys)
 
 
-    def view_userpasses(self, sort="id", order="ASC", userid=None, countpass=False):
-        master_pass = self.MasterPass
+    def view_userpasses(self, sort="id", order="ASC", userid=None, countpass=False, export=False):
         if userid is None:
             readquery = f"SELECT * FROM passw ORDER BY {sort} {order};"
         else:
             readquery = f"SELECT * FROM passw WHERE id = {userid};"
-        # m_pass = getpass.getpass("MasterKey: ")
-        m_pass = "shoaibislam"
-        if m_pass == master_pass :
+        local_pass = self.MasterPass
+        if self.cryptedpass == self.User_Masterpass:
             row = self.dbfetch(readquery)
-            content_table = tools.print_box(row, m_pass)
+            content_table = tools.print_box(row, local_pass)
+            if export:
+                return content_table
             print(content_table)
 
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
-        master_pass= self.MasterPass
         insert_query = """INSERT INTO passw (app_name,username, passwd)
                             VALUES (:appname ,:u_name,:pass)"""
-        m_pass = "shoaibislam"
-        if m_pass == master_pass:
+        local_pass = self.MasterPass
+        if self.cryptedpass == self.User_Masterpass:
             app_name = input("App Name:")
             u_name = input("Username: ")
-            enc = encrypt(getpass.getpass("Password: ").encode(), m_pass.encode())
+            enc = encrypt(getpass.getpass("Password: ").encode(), local_pass.encode())
             try:
                 with self.connection:
                     self.cur.execute(insert_query,{
@@ -200,17 +207,16 @@ class DatabaseManager:
 
 
     def keyins(self, title=None, silent=True): # Pylint: disable=W0613
-        master_pass= self.MasterPass
         insert_query = """INSERT INTO keys (title, key)
                             VALUES (:key_title ,:key_pass)"""
-        m_pass = "shoaibislam"
-        if m_pass == master_pass:
+        local_pass = self.MasterPass
+        if self.cryptedpass == self.User_Masterpass:
             if title is None:
                 title = input("Title: ")
             if silent:
-                enc = encrypt(getpass.getpass("Key: ").encode(), m_pass.encode())
+                enc = encrypt(getpass.getpass("Key: ").encode(), local_pass.encode())
             else:
-                enc = encrypt(input("Key: ").encode(), m_pass.encode())
+                enc = encrypt(input("Key: ").encode(), local_pass.encode())
             try:
                 with self.connection:
                     self.cur.execute(insert_query,{
@@ -226,11 +232,9 @@ class DatabaseManager:
 
 
     def noteins(self, title=None): # Pylint: disable=W0613
-        master_pass= self.MasterPass
         insert_query = """INSERT INTO notes (title,content, date)
                             VALUES (:note_title ,:note_content, datetime())"""
-        m_pass = "shoaibislam"
-        if m_pass == master_pass:
+        if self.cryptedpass == self.User_Masterpass:
             if title is None:
                 title = input("Title:")
             centext = "BODY"
@@ -288,4 +292,22 @@ class DatabaseManager:
                 self.cur.execute(query.format("notes"))
         
 
+    def export(self, service=None, json=False, csv=False):
+        backup = ""
+        ext = ".json" if json else ".csv"
+        if self.cryptedpass == self.User_Masterpass:
+            if service == "passw":
+                rawbac = self.view_userpasses(export=True)
+                backup = rawbac.get_json_string() if json else rawbac.get_csv_string()
 
+            
+            elif service == "keys":
+                rawbac = self.view_keys(export=True)
+                backup = rawbac.get_json_string() if json else rawbac.get_csv_string()
+            else:
+                print("service name was not found")
+            print(backup)
+            with open("backup"+ext, "w") as f:
+                for line in backup:
+                    if line != "\n":
+                        f.write(line)

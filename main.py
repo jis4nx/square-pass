@@ -1,8 +1,8 @@
 import sys
+import argparse
 from passwordManager import base
 from passwordManager import argaction
-import argparse
-
+from passwordManager.ciphers import hashuser
 
 
 pwdwrong = ["Sorry that's not correct!",
@@ -14,7 +14,9 @@ pwdwrong = ["Sorry that's not correct!",
 
 
 
-db =base.DatabaseManager("shoaibislam")
+# userInp = input("Enter masterpass: ")
+userInp = "shoaibislam"
+db =base.DatabaseManager(userInp,hashuser(userInp))
 
 parser = argparse.ArgumentParser(prog="ins",
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -59,6 +61,7 @@ opt.add_argument("-r",'--recent',       dest="recent",action="store_true",      
 dan = parser.add_argument_group('Often Args :', '')
 dan.add_argument("--bigbang",           dest="bigbang",metavar="[boom | passw | keys | notes]",help="Erase Service information")
 opt.add_argument("-g", "--gen" ,        dest="generate",nargs="?" , type=int, const=8  ,     help="Generate Advance & Strong Pass")
+opt.add_argument("-e", "--export" ,        dest="export",nargs="+",     help="Generate Advance & Strong Pass")
                     
 
 
@@ -178,3 +181,14 @@ if args.update:
     
     except KeyError:
         print("Availables: \nusers | keys")
+
+if args.export:
+    try:
+        service_name = args.export[0]
+        fileform = args.export[1]
+    except IndexError:
+        fileform = "json"
+    if fileform == "csv":
+        db.export(service=service_name,csv=True)
+    elif fileform == "json":
+        db.export(service=service_name,json=True)

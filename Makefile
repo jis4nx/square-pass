@@ -1,7 +1,3 @@
-
-
-
-
 .PHONY : build
 build:
 	clear
