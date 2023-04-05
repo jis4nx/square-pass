@@ -7,6 +7,7 @@ import platform
 from passwordManager.ciphers import encrypt,decrypt
 from passwordManager import tools
 from prettytable import PrettyTable
+import json
 
 class DatabaseManager:
     """ Class Doc Goes Here"""
@@ -43,10 +44,9 @@ class DatabaseManager:
                 return self.cur.fetchall()
         except sqlite3.Error as err:
             print(err)
-
-
-    def update(self,table="passw", row=None, value=None, id=None):
-        local_pass = self.User_Masterpass
+ 
+    def update(self, table='passw',id=None):
+        local_pass = self.MasterPass
         if self.cryptedpass == self.User_Masterpass:
             if table == "passw":
                 lst = ["app_name", "username", "passwd"]
@@ -59,9 +59,9 @@ class DatabaseManager:
 
             for idxlst, inp in enumerate(lst):
                 if inp == "passwd":
-                    inpass = getpass.getpass(lstinp[idxlst])
-                    enc = encrypt(inpass.encode(), local_pass.encode()).decode() if inpass != "" else ""
-
+                    # inpass = getpass.getpass(lstinp[idxlst])
+                    salt, iv, enc = encrypt(getpass.getpass("Password: ").encode('utf-8'), local_pass.encode('utf-8'))
+                    enc = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
                 else:
                     enc = input(lstinp[idxlst])
                 userinp.append(enc)
@@ -71,16 +71,16 @@ class DatabaseManager:
                 if inp != "":
                     try:
                         with self.connection:
-                            update_query = f"""UPDATE {table}
-                                                SET {lst[idx]} = '{inp}', date=datetime()
-                                            WHERE id={id};"""
+                            update_query = f"""UPDATE '{table}'
+                                                SET '{lst[idx]}' = '{inp}'
+                                                WHERE id={id};"""
                             self.cur.execute(update_query)
                     except sqlite3.Error as err:
                         print(err)
                 else:
                     pass
 
-  
+            
     def count(self,icase=False, table=None, column=None, cred=None):
         master_pass = self.MasterPass
         local_pass = self.User_Masterpass
@@ -187,18 +187,20 @@ class DatabaseManager:
 
     def insert(self,app_name=None,user_name=None): # Pylint: disable=W0613
         insert_query = """INSERT INTO passw (app_name,username, passwd)
-                            VALUES (:appname ,:u_name,:pass)"""
+                            VALUES (:appname ,:u_name,:passw)"""
         local_pass = self.MasterPass
         if self.cryptedpass == self.User_Masterpass:
             app_name = input("App Name:")
             u_name = input("Username: ")
-            enc = encrypt(getpass.getpass("Password: ").encode(), local_pass.encode())
+            salt, iv, enc = encrypt(getpass.getpass("Password: ").encode('utf-8'), local_pass.encode('utf-8'))
+            data = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
+
             try:
                 with self.connection:
                     self.cur.execute(insert_query,{
                         "appname": app_name,
                         "u_name":u_name,
-                        "pass":enc.decode()
+                        "passw": data
                     }
                     )
                 print(f"[+]Successfully Added for {u_name}")
@@ -214,14 +216,16 @@ class DatabaseManager:
             if title is None:
                 title = input("Title: ")
             if silent:
-                enc = encrypt(getpass.getpass("Key: ").encode(), local_pass.encode())
+                salt, iv, enc = encrypt(getpass.getpass("Key: ").encode(), local_pass.encode())
+                data = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
             else:
-                enc = encrypt(input("Key: ").encode(), local_pass.encode())
+                salt, iv, enc = encrypt(input("Key: ").encode(), local_pass.encode())
+                data = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
             try:
                 with self.connection:
                     self.cur.execute(insert_query,{
                         "key_title": title,
-                        "key_pass":enc.decode()
+                        "key_pass":data
                     }
                     )
                 print()
