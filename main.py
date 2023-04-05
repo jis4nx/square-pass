@@ -15,7 +15,7 @@ pwdwrong = ["Sorry that's not correct!",
 
 
 # userInp = input("Enter masterpass: ")
-userInp = "shoaibislam"
+userInp = "lol123"
 db =base.DatabaseManager(userInp,hashuser(userInp))
 
 parser = argparse.ArgumentParser(prog="ins",
