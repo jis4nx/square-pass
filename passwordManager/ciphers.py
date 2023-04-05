@@ -1,19 +1,31 @@
 import base64, hashlib
 from Crypto.Cipher import AES 
-import os
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Protocol.KDF import PBKDF2
 
-def encrypt(msg, masterkey):
-    masterkey = base64.b64encode(masterkey) 
-    IV = os.urandom(16)
-    cipher = AES.new(masterkey, AES.MODE_CFB, IV)
-    return base64.b64encode(IV + cipher.encrypt(msg))
+def encrypt(data, master_key):
+    salt = get_random_bytes(16)
+    key = PBKDF2(master_key, salt, dkLen=32)
+    cipher = AES.new(key, AES.MODE_CBC)
+    ct_bytes = cipher.encrypt(pad(data, AES.block_size))
 
-def decrypt(encMsg, masterkey):
-    masterkey = base64.b64encode(masterkey) 
-    encMsg = base64.b64decode(encMsg)
-    IV = encMsg[:AES.block_size]
-    cipher = AES.new(masterkey, AES.MODE_CFB, IV)
-    return cipher.decrypt(encMsg[AES.block_size:])
+    iv = base64.b64encode(cipher.iv).decode('utf-8')
+    ct = base64.b64encode(ct_bytes).decode('utf-8')
+    salt = base64.b64encode(salt).decode('utf-8')
+
+    return salt, iv, ct
+
+def decrypt(salt, iv, ct, master_key):
+    salt = base64.b64decode(salt)
+    iv = base64.b64decode(iv)[:16]
+    ct = base64.b64decode(ct)
+    key = PBKDF2(master_key, salt, dkLen=32)
+    cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+    decipher = unpad(cipher.decrypt(ct), AES.block_size)
+
+    return decipher
+
 
 def finalhash(msg, masterkey):
     masterkey = base64.b64encode(masterkey) 
