@@ -1,5 +1,6 @@
 from prettytable import PrettyTable
 from passwordManager.ciphers import encrypt, decrypt
+import json
 
 
 
@@ -37,13 +38,19 @@ def print_note(note,title,sub,markdown=True):
 def print_box(lst, master_pass):
 
     headers = ["Index","App Name", "Username", "Password"]
+    # headers = ['data']
     t = PrettyTable(headers)
     
     for row in lst:
         idx = row[0]
-        encPass = str(row[3]).encode()
         username , app_name = row[1] , row[2]
-        decipher = decrypt(encPass, master_pass.encode()).decode()
+        res = json.loads(row[3])
+
+        # print(res)
+        salt = res['salt']
+        iv = res['iv']
+        cipher = res['enc']
+        decipher = decrypt(salt, iv, cipher, master_pass.encode()).decode('utf-8')
         conts = [idx, username, app_name, decipher]
         t.add_row(conts)
     return t 
