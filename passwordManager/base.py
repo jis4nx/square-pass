@@ -81,44 +81,42 @@ class DatabaseManager:
                     pass
 
     def count(self, icase=False, table=None, column=None, cred=None):
-        local_pass = self.MasterPass
-        if self.cryptedpass == self.User_Masterpass:
+        if self.cryptedpass != self.User_Masterpass:
+            return
+
+        if column == "passwd":
+            passlist = self._get_decrypted_passwords()
+            self._print_passwords(passlist, cred)
+        else:
             readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
-            try:
-                if column == "passwd":
-                    passlist = []
-                    row = self.dbfetch(
-                        "SELECT username,app_name,passwd FROM passw;")
-                    for col in row:
-                        data = json.loads(col[2])
-                        salt, iv, ct = data.values()
-                        decipher = decrypt(
-                            salt, iv, ct, local_pass.encode()).decode()
-                        passlist.append(
-                            {'Username': col[0], 'App': col[1], 'Pass': decipher})
+            if icase:
+                readquery = "SELECT COUNT(*) FROM {} WHERE {} = lower('{}');"
+            row = self.dbfetch(readquery.format(table, column, cred))
+            print(row[0][0])
 
-                    headers = ['Username', 'App Name', 'Password', 'Count']
-                    t = PrettyTable(headers)
-                    count = 0
-                    for passw in passlist:
-                        if cred == passw['Pass']:
-                            count += 1
-                            t.add_row(
-                                [passw['Username'], passw['App'], passw['Pass'], ''])
-                    t.add_row(['', '', '', ''])
-                    t.add_row(['', '', '', count])
-                    print(t)
+    def _get_decrypted_passwords(self):
+        local_pass = self.MasterPass
+        passlist = []
+        row = self.dbfetch("SELECT username, app_name, passwd FROM passw;")
+        for col in row:
+            data = json.loads(col[2])
+            salt, iv, ct = data.values()
+            decipher = decrypt(salt, iv, ct, local_pass.encode()).decode()
+            passlist.append(
+                {'Username': col[0], 'App': col[1], 'Pass': decipher})
+        return passlist
 
-                else:
-                    if icase:
-                        readquery = "SELECT COUNT(*) FROM {} WHERE {} = lower('{}');"
-                    else:
-                        readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
-                    row = self.dbfetch(readquery.format(table, column, cred))
-                    print(row[0][0])
-
-            except Exception as err:
-                print(err)
+    def _print_passwords(self, passlist, cred):
+        headers = ['Username', 'App Name', 'Password']
+        t = PrettyTable(headers)
+        count = 0
+        for passw in passlist:
+            if cred == passw['Pass']:
+                count += 1
+                t.add_row([passw['Username'], passw['App'], passw['Pass']])
+        col = ['' for _ in range(count-1)]
+        t.add_column("Count", [str(count), *col])
+        print(t)
 
     def filter(self, icase=False, username=None, appname=None, state="or"):
         if username is None and appname is None:
