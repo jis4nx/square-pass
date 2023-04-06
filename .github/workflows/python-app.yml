@@ -26,5 +26,5 @@ jobs:
 
     - name: Run the app
       run: |
-        python intall.py
+        python install.py
         python main.py --help
