@@ -28,3 +28,4 @@ jobs:
       run: |
         python install.py
         python main.py --help
+        echo 'DONE'
