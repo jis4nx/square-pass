@@ -111,6 +111,7 @@ class DatabaseManager:
         t = PrettyTable(headers)
         count = 0
         for passw in passlist:
+            print(passw)
             if cred == passw['Pass']:
                 count += 1
                 t.add_row([passw['Username'], passw['App'], passw['Pass']])
@@ -122,7 +123,8 @@ class DatabaseManager:
         if username is None and appname is None:
             print("Please Define A Service Parameter")
         elif username is not None or appname is not None:
-            local_pass = self.User_Masterpass
+            # local_pass = self.User_Masterpass
+            local_pass = self.MasterPass
             if icase:
                 readquery = """SELECT * FROM passw WHERE username = lower('{}') {} app_name = lower('{}');"""
             else:
