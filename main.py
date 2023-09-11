@@ -12,8 +12,7 @@ pwdwrong = [
 ]
 
 
-# userInp = input("Enter masterpass: ")
-userInp = "lol123"
+userInp = input("Enter masterpass: ")
 db = base.DatabaseManager(userInp, hashuser(userInp))
 
 parser = argparse.ArgumentParser(
@@ -286,7 +285,6 @@ def main():
     for arg, action in actions.items():
         if getattr(args, arg):
             action()
-    parser.print_help()
 
 
 if __name__ == "__main__":

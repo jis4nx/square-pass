@@ -1,8 +1,10 @@
-import base64, hashlib
-from Crypto.Cipher import AES 
+import base64
+import hashlib
+from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Protocol.KDF import PBKDF2
+
 
 def encrypt(data, master_key):
     salt = get_random_bytes(16)
@@ -16,6 +18,7 @@ def encrypt(data, master_key):
 
     return salt, iv, ct
 
+
 def decrypt(salt, iv, ct, master_key):
     salt = base64.b64decode(salt)
     iv = base64.b64decode(iv)[:16]
@@ -28,14 +31,18 @@ def decrypt(salt, iv, ct, master_key):
 
 
 def finalhash(msg, masterkey):
-    masterkey = base64.b64encode(masterkey) 
+    masterkey = base64.b64encode(masterkey)
     IV = "agun".encode()*4
     cipher = AES.new(masterkey, AES.MODE_CFB, IV)
     encd = base64.b64encode(IV + cipher.encrypt(msg))
     return hashlib.sha256(encd).hexdigest()
 
+
 def hashuser(masterkey):
     salt = 'xx01'
-    keysalt = (masterkey[-4:]+ salt) * 2
-    hashed_mpass = finalhash(masterkey.encode(), keysalt.encode())
-    return hashed_mpass
+    keysalt = (masterkey[-4:] + salt) * 2
+    try:
+        hashed_mpass = finalhash(masterkey.encode(), keysalt.encode())
+        return hashed_mpass
+    except ValueError as e:
+        print(e)
