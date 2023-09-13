@@ -10,19 +10,20 @@ import platform
 import json
 
 
+def readpass():
+    linuxdir = os.path.expanduser("~/.local/share/pass.key")
+    windir = os.path.expanduser("~\\AppData\\pass.key")
+    sysname = platform.system()
+    pathname = linuxdir if sysname == "Linux" else windir
+    with open(pathname, "r") as file:
+        return file.read()
+
+
 class DatabaseManager:
     """ Class Doc Goes Here"""
 
-    def readpass(self):
-        linuxdir = os.path.expanduser("~/.local/share/pass.key")
-        windir = os.path.expanduser("~\\AppData\\pass.key")
-        sysname = platform.system()
-        pathname = linuxdir if sysname == "Linux" else windir
-        with open(pathname, "r") as file:
-            return file.read()
-
     def __init__(self, MasterPass, cryptedpass):
-        self.User_Masterpass = self.readpass()
+        self.User_Masterpass = readpass()
         check_pass = True if self.User_Masterpass == cryptedpass else False
         self.cryptedpass = cryptedpass if check_pass else None
         self.MasterPass = MasterPass if check_pass else None
@@ -111,7 +112,7 @@ class DatabaseManager:
         t = PrettyTable(headers)
         count = 0
         for passw in passlist:
-            print(passw)
+            print()
             if cred == passw['Pass']:
                 count += 1
                 t.add_row([passw['Username'], passw['App'], passw['Pass']])

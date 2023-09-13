@@ -1,8 +1,14 @@
 import argparse
+from getpass import getpass
 from passwordManager import base
 from passwordManager import argaction
-from passwordManager.ciphers import hashuser
-
+from passwordManager.ciphers import hashuser, encrypt, decrypt
+from passwordManager.cache import set_with_ttl, CACHE_DIR
+from os import urandom
+from passwordManager.base import readpass
+from subprocess import Popen
+from passwordManager.tools import is_process_running
+import pickle
 
 pwdwrong = [
     "Sorry that's not correct!",
@@ -11,9 +17,6 @@ pwdwrong = [
     "Hold on and give the correct password!",
 ]
 
-
-userInp = input("Enter masterpass: ")
-db = base.DatabaseManager(userInp, hashuser(userInp))
 
 parser = argparse.ArgumentParser(
     prog="ins",
@@ -34,6 +37,9 @@ opt.add_argument(
     dest="update",
     metavar="",
     help="Update your credential with service name",
+)
+opt.add_argument(
+    "-l", "--login", dest="login", metavar="", nargs="?", const="None", help="Login to remember password"
 )
 opt.add_argument("-cat", "--cat", dest="cat", metavar="", help="View File")
 opt.add_argument(
@@ -128,164 +134,209 @@ args = parser.parse_args()
 services = ["passw", "notes", "keys"]
 
 
-def show_usage(show_services=True, usage_msg=None, example=None, show_fields=False,arg=None):
-    print("")
-    if show_services:
-        print(f"Available Services -[ {' | '.join(services)} ]")
-    if usage_msg is not None:
-        print(f"usage: sq {arg} {usage_msg}")
-    if example is not None:
-        print(f"eg: sq {arg} {example}")
-    if show_fields:
-        pass
-    print("")
+class UserArgManager:
+    def __init__(self):
+        self.userInp = None
+        self.db = None
 
+    def setup(self):
+        try:
+            with open(CACHE_DIR, 'rb') as f:
+                data = pickle.load(f)
+        except FileNotFoundError:
+            data = None
+            with open(CACHE_DIR, 'wb') as f:
+                pickle.dump(data, f)
 
-def handle_insert(passw=False, keypass=False, note=False):
-    if passw:
-        db.insert()
-    if keypass:
-        mode = False if args.normal else True
-        if args.keypass == "None":
-            db.keyins(silent=mode)
+        if data:
+            salt, iv, enc, rand_byte = data['upass'][0]
+            upass = decrypt(salt, iv, enc, rand_byte).decode()
+            self.userInp = upass
+            self.db = base.DatabaseManager(
+                self.userInp, hashuser(self.userInp))
         else:
-            db.keyins(args.keypass, silent=mode)
-    if note:
-        if note == "None":
-            db.noteins()
-        else:
-            db.noteins(args.note)
+            userpass = getpass(prompt="Enter Masterpass: ")
+            hashed_pass = hashuser(userpass)
+            while True:
+                if hashed_pass != readpass():
+                    userpass = getpass(prompt="Try again: ")
+                    hashed_pass = hashuser(userpass)
+                else:
+                    self.userInp = userpass
+                    break
+            self.db = base.DatabaseManager(
+                self.userInp, hashuser(self.userInp))
 
+    def show_usage(self, show_services=True, usage_msg=None, example=None, show_fields=False, arg=None):
+        print("")
+        if show_services:
+            print(f"Available Services -[ {' | '.join(services)} ]")
+        if usage_msg is not None:
+            print(f"usage: sq {arg} {usage_msg}")
+        if example is not None:
+            print(f"eg: sq {arg} {example}")
+        if show_fields:
+            pass
+        print("")
 
-def generate_password():
-    passw = argaction.generate_password(args.generate)
-    if args.copy:
-        argaction.copy_to_clipboard(passw)
-    print(passw)
+    def handle_insert(self, passw=False, keypass=False, note=False):
+        if passw:
+            self.db.insert()
+        if keypass:
+            mode = False if args.normal else True
+            if args.keypass == "None":
+                self.db.keyins(silent=mode)
+            else:
+                self.db.keyins(args.keypass, silent=mode)
+        if note:
+            if note == "None":
+                self.db.noteins()
+            else:
+                self.db.noteins(args.note)
 
+    def generate_password(self):
+        passw = argaction.generate_password(args.generate)
+        if args.copy:
+            argaction.copy_to_clipboard(passw)
+        print(passw)
 
-def handle_retrieve_data():
-    try:
-        idx = int(args.cat.split("/")[1])
-        service = args.cat.split("/")[0]
-        if service == "notes":
-            db.view_notes(noteid=idx)
-        elif service == "keys":
-            db.view_keys(keyid=idx)
-        elif service == "passw":
-            db.view_userpasses(userid=idx)
-        else:
-            print("Availables: ", " | ".join(services))
-    except (IndexError, ValueError):
-        print("Usage: sq -cat service/index")
+    def handle_retrieve_data(self):
+        try:
+            idx = int(args.cat.split("/")[1])
+            service = args.cat.split("/")[0]
+            if service == "notes":
+                self.db.view_notes(noteid=idx)
+            elif service == "keys":
+                self.db.view_keys(keyid=idx)
+            elif service == "passw":
+                self.db.view_userpasses(userid=idx)
+            else:
+                print("Availables: ", " | ".join(services))
+        except (IndexError, ValueError):
+            print("Usage: sq -cat service/index")
 
+    def handle_count(self):
+        try:
+            mode = True if args.ignorecase else False
+            service = args.count[0].split("/")[0]
+            field = args.count[0].split("/")[1]
+            self.db.count(icase=mode, table=service,
+                          column=field, cred=args.count[1])
+        except Exception as err:
+            print(err)
 
-def handle_count():
-    try:
+    def handle_showlist(self):
+        sort = "date" if args.recent else "id"
+        order = "DESC" if args.recent else "ASC"
         mode = True if args.ignorecase else False
-        service = args.count[0].split("/")[0]
-        field = args.count[0].split("/")[1]
-        db.count(icase=mode, table=service, column=field, cred=args.count[1])
-    except Exception as err:
-        print(err)
-
-
-def handle_showlist():
-    sort = "date" if args.recent else "id"
-    order = "DESC" if args.recent else "ASC"
-    mode = True if args.ignorecase else False
-    if args.username:
-        db.filter(icase=mode, username=args.username)
-    elif args.appname:
-        db.filter(icase=mode, appname=args.appname)
-    else:
-        if args.showlist == "passw":
-            db.view_userpasses(sort=sort, order=order)
-        elif args.showlist == "notes":
-            db.view_notes(sort=sort, order=order)
-
-        elif args.showlist == "keys":
-            db.view_keys(sort=sort, order=order)
-
+        if args.username:
+            self.db.filter(icase=mode, username=args.username)
+        elif args.appname:
+            self.db.filter(icase=mode, appname=args.appname)
         else:
-            show_usage(arg="--ls", example="passw", usage_msg="<service>")
+            if args.showlist == "passw":
+                self.db.view_userpasses(sort=sort, order=order)
+            elif args.showlist == "notes":
+                self.db.view_notes(sort=sort, order=order)
 
+            elif args.showlist == "keys":
+                self.db.view_keys(sort=sort, order=order)
 
-def handle_remove():
-    try:
-        service_name = args.remove.split("/")[0]
-        ind = int(args.remove.split("/")[1])
+            else:
+                self.show_usage(arg="--ls", example="passw",
+                                usage_msg="<service>")
+
+    def handle_remove(self):
         try:
-            db.remove_cd(table=service_name, u_id=ind)
-        except KeyError:
-            print("Available args:", " | ".join(services))
-    except IndexError:
-        print("Usage: sq --rm service/index")
+            service_name = args.remove.split("/")[0]
+            ind = int(args.remove.split("/")[1])
+            try:
+                self.db.remove_cd(table=service_name, u_id=ind)
+            except KeyError:
+                print("Available args:", " | ".join(services))
+        except IndexError:
+            print("Usage: sq --rm service/index")
 
+    def handle_bigbang(self):
+        if args.bigbang == "boom":
+            self.db.bigbang(boom=True)
 
-def handle_bigbang():
-    if args.bigbang == "boom":
-        db.bigbang(boom=True)
+        elif args.bigbang == "passw":
+            self.db.bigbang(userpass=True)
+        elif args.bigbang == "keys":
+            self.db.bigbang(keys=True)
+        elif args.bigbang == "notes":
+            self.db.bigbang(notes=True)
+        else:
+            print("Available args: \nboom | passw | keys | notes")
 
-    elif args.bigbang == "passw":
-        db.bigbang(userpass=True)
-    elif args.bigbang == "keys":
-        db.bigbang(keys=True)
-    elif args.bigbang == "notes":
-        db.bigbang(notes=True)
-    else:
-        print("Available args: \nboom | passw | keys | notes")
-
-
-def handle_update():
-    usage = r"sq -U <service>/<index>"
-    eg = "sq -U passw/2"
-    try:
-        service_name = args.update.split("/")[0]
-        index = int(args.update.split("/")[1])
-        if service_name not in services:
-            show_usage(show_services=True, usage_msg=usage, example=eg)
-            return
+    def handle_update(self):
+        usage = r"sq -U <service>/<index>"
+        eg = "sq -U passw/2"
         try:
-            db.update(table=service_name, id=index)
+            service_name = args.update.split("/")[0]
+            index = int(args.update.split("/")[1])
+            if service_name not in services:
+                self.show_usage(show_services=True,
+                                usage_msg=usage, example=eg)
+                return
+            try:
+                self.db.update(table=service_name, id=index)
+            except Exception as e:
+                print(e)
+                print("Availables: \nusers | keys")
+
         except Exception as e:
-            print(e)
-            print("Availables: \nusers | keys")
+            self.show_usage(show_services=True, usage_msg=usage, example=eg)
 
-    except Exception as e:
-        show_usage(show_services=True, usage_msg=usage, example=eg)
+    def handle_export(self):
+        try:
+            service_name = args.export[0]
+            fileform = args.export[1]
+        except IndexError:
+            fileform = "json"
+        if fileform == "csv":
+            self.db.export(service=service_name, csv=True)
+        elif fileform == "json":
+            self.db.export(service=service_name, json=True)
 
+    def handle_login(self):
+        if args.login:
+            cache_time = input("Time duration to remember <minutes> : ")
+            while True:
+                if not cache_time.isdigit():
+                    cache_time = input("Please Enter minutes in number: ")
+                else:
+                    break
+            rand_byte = urandom(16)
+            salt, iv, enc = encrypt(self.userInp.encode('utf-8'), rand_byte)
+            set_with_ttl('upass', [salt, iv, enc, rand_byte], int(cache_time))
+            cmd = ['python', 'observer.py']
+            if not is_process_running(cmd):
+                Popen(['python', 'passwordManager/observer.py'],
+                      start_new_session=True)
 
-def handle_export():
-    try:
-        service_name = args.export[0]
-        fileform = args.export[1]
-    except IndexError:
-        fileform = "json"
-    if fileform == "csv":
-        db.export(service=service_name, csv=True)
-    elif fileform == "json":
-        db.export(service=service_name, json=True)
+    def handle_functions(self):
+        actions = {
+            "update": self.handle_update,
+            "export": self.handle_export,
+            "bigbang": self.handle_bigbang,
+            "remove": self.handle_remove,
+            "showlist": self.handle_showlist,
+            "cat": self.handle_retrieve_data,
+            "note": lambda: self.handle_insert(note=args.note),
+            "passw": lambda: self.handle_insert(passw=True),
+            "keypass": lambda: self.handle_insert(keypass=True),
+            "generate": self.generate_password,
+            "login": self.handle_login
+        }
 
-
-def main():
-    actions = {
-        "update": handle_update,
-        "export": handle_export,
-        "bigbang": handle_bigbang,
-        "remove": handle_remove,
-        "showlist": handle_showlist,
-        "cat": handle_retrieve_data,
-        "note": lambda: handle_insert(note=args.note),
-        "passw": lambda: handle_insert(passw=True),
-        "keypass": lambda: handle_insert(keypass=True),
-        "generate": generate_password,
-    }
-
-    for arg, action in actions.items():
-        if getattr(args, arg):
-            action()
+        for arg, action in actions.items():
+            if getattr(args, arg):
+                action()
 
 
 if __name__ == "__main__":
-    main()
+    argmanager = UserArgManager()
+    argmanager.setup()
+    argmanager.handle_functions()
