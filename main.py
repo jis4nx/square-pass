@@ -313,7 +313,7 @@ class UserArgManager:
             set_with_ttl('upass', [salt, iv, enc, rand_byte], int(cache_time))
             cmd = ['python', 'observer.py']
             if not is_process_running(cmd):
-                Popen(['python', 'passwordManager/observer.py'],
+                Popen(['python', 'observer.py'],
                       start_new_session=True)
 
     def handle_functions(self):
