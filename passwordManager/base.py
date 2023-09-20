@@ -175,7 +175,10 @@ class DatabaseManager:
                 keys = PrettyTable()
                 keys.field_names = ["Index", "Title", "Key"]
                 for r in row:
-                    decipher = decrypt(r[2], local_pass.encode()).decode()
+                    data = json.loads(r[2])
+                    salt, iv, ct = data.values()
+                    decipher = decrypt(
+                        salt, iv, ct, local_pass.encode()).decode()
                     keys.add_row([r[0], r[1], decipher])
                 if export:
                     return keys
