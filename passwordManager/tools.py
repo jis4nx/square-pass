@@ -1,13 +1,11 @@
-from prettytable import PrettyTable
 from passwordManager.ciphers import encrypt, decrypt
+from passwordManager.conf import get_config
 import json
 import psutil
-
-
+from rich.table import Table
 from rich import box
 from rich.panel import Panel
 from rich.markdown import Markdown
-from rich.align import Align
 from rich.console import Console
 from rich.layout import Layout
 
@@ -32,23 +30,26 @@ def print_note(note, title, sub, markdown=True):
 
 
 def print_box(lst, master_pass):
-
-    headers = ["Index", "App Name", "Username", "Password"]
-    # headers = ['data']
-    t = PrettyTable(headers)
+    config = get_config()
+    colors = config.get('passw_colors')
+    table = Table()
+    table.add_column("Index", style=colors.get('index'))
+    table.add_column("Username", style=colors.get('username'))
+    table.add_column("App Name", style=colors.get('appname'))
+    table.add_column("Password", style=colors.get('password'))
 
     for row in lst:
-        idx = row[0]
-        username, app_name = row[1], row[2]
+        idx, username, app_name = row[:3]
         res = json.loads(row[3])
         salt = res['salt']
         iv = res['iv']
         cipher = res['enc']
         decipher = decrypt(
             salt, iv, cipher, master_pass.encode()).decode('utf-8')
-        conts = [idx, username, app_name, decipher]
-        t.add_row(conts)
-    return t
+        table.add_row(str(idx), username, app_name, decipher)
+    console = Console()
+    console.print(table)
+    return ""
 
 
 def is_process_running(command):

@@ -1,5 +1,5 @@
-import argparse
 from getpass import getpass
+from pyperclip import os
 from passwordManager import base
 from passwordManager import argaction
 from passwordManager.ciphers import hashuser, encrypt, decrypt
@@ -8,6 +8,7 @@ from os import urandom
 from passwordManager.base import readpass
 from subprocess import Popen
 from passwordManager.tools import is_process_running
+from passwordManager.parser import run_parser
 import pickle
 
 pwdwrong = [
@@ -17,137 +18,20 @@ pwdwrong = [
     "Hold on and give the correct password!",
 ]
 
-
-parser = argparse.ArgumentParser(
-    prog="ins",
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    description="",
-    epilog="Read Docs at https://github.com/jis4nx/square-pass",
-    conflict_handler="resolve",
-    usage="%(prog)s action [show|remove|search] ",
-)
-
-flags = parser.add_argument_group("Command :", "")
-opt = parser.add_argument_group("Options :", "")
-
-
-opt.add_argument(
-    "-U",
-    "--update",
-    dest="update",
-    metavar="",
-    help="Update your credential with service name",
-)
-opt.add_argument(
-    "-l", "--login", dest="login", metavar="", nargs="?", const="None", help="Login to remember password"
-)
-opt.add_argument("-cat", "--cat", dest="cat", metavar="", help="View File")
-opt.add_argument(
-    "-c", "--count", dest="count", metavar="", nargs=2, help="Counts reused credential"
-)
-flags.add_argument(
-    "--ls",
-    "--showlist",
-    dest="showlist",
-    nargs="?",
-    const="list",
-    help="Shows Credential",
-)
-flags.add_argument(
-    "--rm", "--remove", dest="remove", metavar="", help="remove a credential"
-)
-flags.add_argument(
-    "-n", "--normal", dest="normal", action="store_true", help="Show key while typing"
-)
-
-# Insert
-flags.add_argument(
-    "-P", "--passw", dest="passw", action="store_true", help="Add new credential"
-)
-opt.add_argument(
-    "-K", "--keypass", dest="keypass", nargs="?", const="None", help="Add Key"
-)
-opt.add_argument(
-    "-N", "--note", dest="note", metavar="", nargs="?", const="None", help="Add Note"
-)
-
-# Filter
-opt.add_argument(
-    "-u", "--username", dest="username", metavar="", help="Filter by Username"
-)
-opt.add_argument(
-    "-a", "--appname", dest="appname", metavar="", help="Filter by Appname"
-)
-opt.add_argument(
-    "-b",
-    "--bp",
-    dest="user_pass",
-    action="store_true",
-    help="Filter by both username and password",
-)
-opt.add_argument(
-    "-i",
-    "--ignorecase",
-    dest="ignorecase",
-    action="store_true",
-    help="Index for the credential update",
-)
-
-# Opt args
-opt.add_argument(
-    "-C", "--copy", dest="copy", action="store_true", help="Copy to clipboard"
-)
-opt.add_argument(
-    "-r",
-    "--recent",
-    dest="recent",
-    action="store_true",
-    help="Show recently modified credentials",
-)
-# opt.add_argument("-W",'--warn',         action="store_true",                help="warn about weak passwords")
-
-# Extra Args
-
-dan = parser.add_argument_group("Often Args :", "")
-dan.add_argument(
-    "--bigbang",
-    dest="bigbang",
-    metavar="[boom | passw | keys | notes]",
-    help="Erase Service information",
-)
-opt.add_argument(
-    "-g",
-    "--gen",
-    dest="generate",
-    nargs="?",
-    type=int,
-    const=8,
-    help="Generate Advance & Strong Pass",
-)
-opt.add_argument(
-    "-e", "--export", dest="export", nargs="+", help="Generate Advance & Strong Pass"
-)
-
-
-args = parser.parse_args()
-
 services = ["passw", "notes", "keys"]
 
 
 class UserArgManager:
-    def __init__(self):
+    def __init__(self, args):
         self.userInp = None
         self.db = None
+        self.args = args
 
     def setup(self):
-        try:
-            with open(CACHE_DIR, 'rb') as f:
-                data = pickle.load(f)
-        except FileNotFoundError:
-            data = None
-            with open(CACHE_DIR, 'wb') as f:
-                pickle.dump(data, f)
-
+        data = None
+        if os.path.exists(CACHE_DIR):
+            with open(CACHE_DIR, 'rb') as file:
+                data = pickle.load(file)
         if data:
             salt, iv, enc, rand_byte = data['upass'][0]
             upass = decrypt(salt, iv, enc, rand_byte).decode()
@@ -183,27 +67,27 @@ class UserArgManager:
         if passw:
             self.db.insert()
         if keypass:
-            mode = False if args.normal else True
-            if args.keypass == "None":
+            mode = False if self.args.normal else True
+            if self.args.keypass == "None":
                 self.db.keyins(silent=mode)
             else:
-                self.db.keyins(args.keypass, silent=mode)
+                self.db.keyins(self.args.keypass, silent=mode)
         if note:
             if note == "None":
                 self.db.noteins()
             else:
-                self.db.noteins(args.note)
+                self.db.noteins(self.args.note)
 
     def generate_password(self):
-        passw = argaction.generate_password(args.generate)
-        if args.copy:
+        passw = argaction.generate_password(self.args.generate)
+        if self.args.copy:
             argaction.copy_to_clipboard(passw)
         print(passw)
 
     def handle_retrieve_data(self):
         try:
-            idx = int(args.cat.split("/")[1])
-            service = args.cat.split("/")[0]
+            idx = int(self.args.cat.split("/")[1])
+            service = self.args.cat.split("/")[0]
             if service == "notes":
                 self.db.view_notes(noteid=idx)
             elif service == "keys":
@@ -217,29 +101,29 @@ class UserArgManager:
 
     def handle_count(self):
         try:
-            mode = True if args.ignorecase else False
-            service = args.count[0].split("/")[0]
-            field = args.count[0].split("/")[1]
+            mode = True if self.args.ignorecase else False
+            service = self.args.count[0].split("/")[0]
+            field = self.args.count[0].split("/")[1]
             self.db.count(icase=mode, table=service,
-                          column=field, cred=args.count[1])
+                          column=field, cred=self.args.count[1])
         except Exception as err:
             print(err)
 
     def handle_showlist(self):
-        sort = "date" if args.recent else "id"
-        order = "DESC" if args.recent else "ASC"
-        mode = True if args.ignorecase else False
-        if args.username:
-            self.db.filter(icase=mode, username=args.username)
-        elif args.appname:
-            self.db.filter(icase=mode, appname=args.appname)
+        sort = "date" if self.args.recent else "id"
+        order = "DESC" if self.args.recent else "ASC"
+        mode = True if self.args.ignorecase else False
+        if self.args.username:
+            self.db.filter(icase=mode, username=self.args.username)
+        elif self.args.appname:
+            self.db.filter(icase=mode, appname=self.args.appname)
         else:
-            if args.showlist == "passw":
+            if self.args.showlist == "passw":
                 self.db.view_userpasses(sort=sort, order=order)
-            elif args.showlist == "notes":
+            elif self.args.showlist == "notes":
                 self.db.view_notes(sort=sort, order=order)
 
-            elif args.showlist == "keys":
+            elif self.args.showlist == "keys":
                 self.db.view_keys(sort=sort, order=order)
 
             else:
@@ -248,8 +132,8 @@ class UserArgManager:
 
     def handle_remove(self):
         try:
-            service_name = args.remove.split("/")[0]
-            ind = int(args.remove.split("/")[1])
+            service_name = self.args.remove.split("/")[0]
+            ind = int(self.args.remove.split("/")[1])
             try:
                 self.db.remove_cd(table=service_name, u_id=ind)
             except KeyError:
@@ -258,14 +142,14 @@ class UserArgManager:
             print("Usage: sq --rm service/index")
 
     def handle_bigbang(self):
-        if args.bigbang == "boom":
+        if self.args.bigbang == "boom":
             self.db.bigbang(boom=True)
 
-        elif args.bigbang == "passw":
+        elif self.args.bigbang == "passw":
             self.db.bigbang(userpass=True)
-        elif args.bigbang == "keys":
+        elif self.args.bigbang == "keys":
             self.db.bigbang(keys=True)
-        elif args.bigbang == "notes":
+        elif self.args.bigbang == "notes":
             self.db.bigbang(notes=True)
         else:
             print("Available args: \nboom | passw | keys | notes")
@@ -274,8 +158,8 @@ class UserArgManager:
         usage = r"sq -U <service>/<index>"
         eg = "sq -U passw/2"
         try:
-            service_name = args.update.split("/")[0]
-            index = int(args.update.split("/")[1])
+            service_name = self.args.update.split("/")[0]
+            index = int(self.args.update.split("/")[1])
             if service_name not in services:
                 self.show_usage(show_services=True,
                                 usage_msg=usage, example=eg)
@@ -291,8 +175,8 @@ class UserArgManager:
 
     def handle_export(self):
         try:
-            service_name = args.export[0]
-            fileform = args.export[1]
+            service_name = self.args.export[0]
+            fileform = self.args.export[1]
         except IndexError:
             fileform = "json"
         if fileform == "csv":
@@ -301,7 +185,7 @@ class UserArgManager:
             self.db.export(service=service_name, json=True)
 
     def handle_login(self):
-        if args.login:
+        if self.args.login:
             cache_time = input("Time duration to remember <minutes> : ")
             while True:
                 if not cache_time.isdigit():
@@ -324,7 +208,7 @@ class UserArgManager:
             "remove": self.handle_remove,
             "showlist": self.handle_showlist,
             "cat": self.handle_retrieve_data,
-            "note": lambda: self.handle_insert(note=args.note),
+            "note": lambda: self.handle_insert(note=self.args.note),
             "passw": lambda: self.handle_insert(passw=True),
             "keypass": lambda: self.handle_insert(keypass=True),
             "generate": self.generate_password,
@@ -332,11 +216,11 @@ class UserArgManager:
         }
 
         for arg, action in actions.items():
-            if getattr(args, arg):
+            if getattr(self.args, arg):
                 action()
 
 
 if __name__ == "__main__":
-    argmanager = UserArgManager()
+    argmanager = UserArgManager(args=run_parser())
     argmanager.setup()
     argmanager.handle_functions()

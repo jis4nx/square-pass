@@ -4,7 +4,7 @@ import os
 import platform
 
 cache_paths = {
-    'Linux': "/tmp/",
+    'Linux': os.path.expanduser("/tmp/"),
     'Windows': os.path.expanduser("")
 }
 
@@ -24,13 +24,6 @@ def save_cache_file():
 
 
 def set_with_ttl(key, value, ttl):
-    exp_time = time.time() + ttl
+    exp_time = time.time() + (ttl * 60)
     cache_data[key] = (value, exp_time)
     save_cache_file()
-
-
-def get(key):
-    if key in cache_data:
-        value, exp_time = cache_data[key]
-        return value, exp_time
-    return None

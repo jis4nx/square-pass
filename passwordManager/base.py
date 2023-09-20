@@ -91,7 +91,7 @@ class DatabaseManager:
         else:
             readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
             if icase:
-                readquery = "SELECT COUNT(*) FROM {} WHERE {} = lower('{}');"
+                readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}' COLLATE NOCASE;"
             row = self.dbfetch(readquery.format(table, column, cred))
             print(row[0][0])
 
@@ -120,20 +120,19 @@ class DatabaseManager:
         t.add_column("Count", [str(count), *col])
         print(t)
 
-    def filter(self, icase=False, username=None, appname=None, state="or"):
+    def filter(self, icase=False, username=None, appname=None, state="OR"):
         if username is None and appname is None:
             print("Please Define A Service Parameter")
         elif username is not None or appname is not None:
             # local_pass = self.User_Masterpass
             local_pass = self.MasterPass
             if icase:
-                readquery = """SELECT * FROM passw WHERE username = lower('{}') {} app_name = lower('{}');"""
+                readquery = """SELECT * FROM passw WHERE username = '{}' COLLATE NOCASE {} app_name = '{}' COLLATE NOCASE;"""
             else:
                 readquery = """SELECT * FROM passw WHERE username = '{}' {} app_name = '{}';"""
                 # user_dict = {"user_name":username,"appname":appname}
             row = self.dbfetch(readquery.format(username, state, appname))
-            content_table = tools.print_box(row, local_pass)
-            print(content_table)
+            tools.print_box(row, local_pass)
 
     def view_notes(self, sort="id", order="ASC", markdown=False, noteid=None):
         if self.cryptedpass == self.User_Masterpass:
@@ -153,7 +152,6 @@ class DatabaseManager:
 
                 else:
                     try:
-                        magicnum = row[0][0]
                         title = row[0][1]
                         content = (
                             (base64.b64decode(row[0][2])).decode()).strip()
