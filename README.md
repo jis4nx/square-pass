@@ -18,7 +18,6 @@
 ---
 
 Are you suffering from trichotillomania, remembering all your different passwords for different platforms? Are you suffering from hypertension and insomnia due to the fear of your password getting stolen by the so-called secured online password managers themselves? 
-Are you among those who dare not pen down their passwords, even in a securely locked diary, for fear of their spouse finding  their social-media passwords?
 
 Fear not, my dear ladies and gentlemen! We are presenting you with  ***SquarePass***  ,a military-grade offline password manager. With SquarePass, you can store your passwords, keys, and notes safely on your local machine. With the AES-256 encryption system of SquarePass, you don't have to worry about your privacy. Access your passwords from CLI with hints or directly copy them from the database to your clipboard. Now, you don't have to struggle with remembering countless passwords and pulling your hair out, or hiding them in a secret diary stashed away on some distant shelf. Square-pass simplifies your life, making it easier, more enjoyable, and stress-free.
 
