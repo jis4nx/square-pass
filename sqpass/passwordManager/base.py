@@ -1,5 +1,6 @@
-from passwordManager.ciphers import encrypt, decrypt
-from passwordManager import tools
+from sqpass.passwordManager.ciphers import encrypt, decrypt
+from sqpass.passwordManager import tools
+
 from prettytable import PrettyTable
 from contextlib import contextmanager
 import sqlite3
@@ -11,14 +12,22 @@ import platform
 import json
 
 
+home_dir = os.path.expanduser("~")
+db_path = os.path.join(home_dir, ".local", "share", "pass.db")
+
+paths = {
+    'Linux': os.path.expanduser("~/.local/share/pass.key"),
+    'Windows': os.path.expanduser("~\\AppData\\pass.key")
+}
+pathname = paths.get(platform.system())
+
+
 def readpass():
-    paths = {
-        'Linux': os.path.expanduser("~/.local/share/pass.key"),
-        'Windows': os.path.expanduser("~\\AppData\\pass.key")
-    }
-    pathname = paths.get(platform.system())
-    with open(pathname, "r") as file:
-        return file.read()
+    if not os.path.exists(pathname):
+        print('No Passkey found\nPerhaps you forgot to execute `sq-init`')
+    else:
+        with open(pathname, "r") as file:
+            return file.read()
 
 
 class DatabaseManager:
@@ -29,7 +38,7 @@ class DatabaseManager:
         check_pass = True if self.User_Masterpass == cryptedpass else False
         self.cryptedpass = cryptedpass if check_pass else None
         self.MasterPass = MasterPass if check_pass else None
-        self.db = "passwordmanager.db"
+        self.db = db_path
         if not check_pass:
             print("Not matched")
         try:
@@ -43,7 +52,7 @@ class DatabaseManager:
         cur = conn.cursor()
         try:
             yield cur
-        except sqlite3.DatabaseError as e:
+        except (sqlite3.DatabaseError, sqlite3.OperationalError) as e:
             raise
         finally:
             conn.commit()
@@ -51,17 +60,19 @@ class DatabaseManager:
 
     @contextmanager
     def dbfetch(self, query, data=None):
-        with self.opendb() as cur:
-            try:
-                if data is None:
-                    cur.execute(query)
-                else:
-                    cur.execute(query, data)
-                yield cur.fetchall()
-            except sqlite3.DatabaseError as e:
-                raise
-            finally:
-                cur.close()
+        try:
+            conn = sqlite3.connect(self.db)
+            cur = conn.cursor()
+            if data is None:
+                cur.execute(query)
+            else:
+                cur.execute(query, data)
+            yield cur.fetchall()
+        except (sqlite3.DatabaseError, sqlite3.OperationalError) as e:
+            print("Database not found, Try to run `sq-init`")
+            exit()
+        finally:
+            cur.close()
 
     def update(self, table='passw', id=None):
         local_pass = self.MasterPass
@@ -76,7 +87,6 @@ class DatabaseManager:
 
             for idxlst, inp in enumerate(lst):
                 if inp == "passwd":
-                    # inpass = getpass.getpass(lstinp[idxlst])
                     salt, iv, enc = encrypt(getpass.getpass("Password: ").encode(
                         'utf-8'), local_pass.encode('utf-8'))
                     enc = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
@@ -109,18 +119,21 @@ class DatabaseManager:
             if icase:
                 readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}' COLLATE NOCASE;"
             with self.dbfetch(readquery.format(table, column, cred)) as row:
-                print(row[0][0])
+                if row:
+                    print(row[0][0])
 
     def _get_decrypted_passwords(self):
         local_pass = self.MasterPass
         passlist = []
         with self.dbfetch("SELECT username, app_name, passwd FROM passw;") as row:
-            for col in row:
-                data = json.loads(col[2])
-                salt, iv, ct = data.values()
-                decipher = decrypt(salt, iv, ct, local_pass.encode()).decode()
-                passlist.append(
-                    {'Username': col[0], 'App': col[1], 'Pass': decipher})
+            if row:
+                for col in row:
+                    data = json.loads(col[2])
+                    salt, iv, ct = data.values()
+                    decipher = decrypt(
+                        salt, iv, ct, local_pass.encode()).decode()
+                    passlist.append(
+                        {'Username': col[0], 'App': col[1], 'Pass': decipher})
         return passlist
 
     def _print_passwords(self, passlist, cred):
@@ -146,7 +159,8 @@ class DatabaseManager:
             else:
                 readquery = """SELECT * FROM passw WHERE username = '{}' {} app_name = '{}';"""
             with self.dbfetch(readquery.format(username, state, appname)) as row:
-                tools.print_box(row, local_pass)
+                if row:
+                    tools.print_box(row, local_pass)
 
     def view_notes(self, sort="id", order="ASC", markdown=False, noteid=None):
         if self.cryptedpass == self.User_Masterpass:
@@ -156,24 +170,25 @@ class DatabaseManager:
                 readquery = f"SELECT * FROM notes WHERE id={noteid};"
             if self.cryptedpass == self.User_Masterpass:
                 with self.dbfetch(readquery) as row:
-                    if noteid is None:
-                        notes = PrettyTable()
-                        notes.field_names = ["Index", "Title", "Content"]
-                        for idx, title, cont, dtime in row:
-                            notes.add_row(
-                                [idx, title, base64.b64decode(cont).decode()[:10]+"..."])
-                        print(notes)
+                    if row:
+                        if noteid is None:
+                            notes = PrettyTable()
+                            notes.field_names = ["Index", "Title", "Content"]
+                            for idx, title, cont, dtime in row:
+                                notes.add_row(
+                                    [idx, title, base64.b64decode(cont).decode()[:10]+"..."])
+                            print(notes)
 
-                    else:
-                        try:
-                            title = row[0][1]
-                            content = (
-                                (base64.b64decode(row[0][2])).decode()).strip()
-                            subtitle = row[0][3]
+                        else:
+                            try:
+                                title = row[0][1]
+                                content = (
+                                    (base64.b64decode(row[0][2])).decode()).strip()
+                                subtitle = row[0][3]
 
-                            tools.print_note(content, title, subtitle)
-                        except IndexError:
-                            print("Not Available")
+                                tools.print_note(content, title, subtitle)
+                            except IndexError:
+                                print("Not Available")
 
     def view_keys(self, sort="id", order="ASC", keyid=None, export=False):
         local_pass = self.MasterPass
@@ -183,7 +198,7 @@ class DatabaseManager:
             readquery = f"SELECT * FROM keys WHERE id = {keyid};"
         if self.cryptedpass == self.User_Masterpass:
             with self.dbfetch(readquery) as row:
-                if len(row) < 1:
+                if row and len(row) < 1:
                     print("Not Available")
                 else:
                     keys = PrettyTable()
@@ -206,10 +221,11 @@ class DatabaseManager:
         local_pass = self.MasterPass
         if self.cryptedpass == self.User_Masterpass:
             with self.dbfetch(readquery) as row:
-                content_table = tools.print_box(row, local_pass)
-                if export:
-                    return content_table
-                print(content_table)
+                if row:
+                    content_table = tools.print_box(row, local_pass)
+                    if export:
+                        return content_table
+                    print(content_table)
 
     def insert(self, app_name=None, user_name=None):  # Pylint: disable=W0613
         insert_query = """INSERT INTO passw (app_name,username, passwd)

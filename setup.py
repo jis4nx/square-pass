@@ -1,5 +1,3 @@
-
-
 from setuptools import setup, find_packages
 import pathlib
 
@@ -9,21 +7,20 @@ long_description = open('README.md').read()
 
 
 setup(
+    name='square-pass3',
+    version='0.0.2',
+    description='A sample Python project',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://github.com/jis4nx/square-pass',
+    author='Rakibul Islam Jisan',
+    author_email='jis4nx@gmail.com',
 
-    name='square-pass',  # Required
-    version='0.0.1',  # Required
-    description='A sample Python project',  # Optional
-    long_description=long_description,  # Optional
-    long_description_content_type='text/markdown', 
-    url='https://github.com/jis4nx/square',  # Optional
-    author='Rakibul Islam Jisan',  # Optional
-    author_email='jis4nx@gmail.com',  # Optional
 
-    classifiers =[
-
-        'Development Status :: 5 - Stable',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Topic :: Build Tools :: Reseach',
+        'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
@@ -33,19 +30,30 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
 
-    keywords='sequence, generator, fibonacci',
-    packages=['passwordManager'],
-    python_requires ='>=3.6, <4',
+    keywords='password_manager, encryption, aes256, cli-password-manager',
+    packages=find_packages(),
+    python_requires='>=3.6, <3.12',
+    install_requires=[
+        "pycryptodome==3.10.1",
+        "prettytable==2.4.0",
+        "colorama==0.4.4",
+        "rich==10.15.2",
+        "pyperclip",
+        "psutil",
+        "setuptools",
+        "wheel",
+        "PyYAML"
+    ],
 
-    entry_points={  # Optional
+    entry_points={
         'console_scripts': [
-            'ggshoaib=passwordManager.main:main',
+            'sq-init=sqpass.install:setmain',
+            'sq=sqpass.main:main',
         ],
     },
-    project_urls={  # Optional
-        'Bug Reports': 'https://github.com/jis4nx/square/issues',
+    project_urls={
+        'Bug Reports': 'https://github.com/jis4nx/square-pass/issues',
         'Funding': 'https://donate.pypi.org',
-        'Say Thanks!': 'http://saythanks.io/to/example',
-        'Source': 'https://github.com/jis4nx/square/',
+        'Source': 'https://github.com/jis4nx/square-pass/',
     },
 )

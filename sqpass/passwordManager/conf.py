@@ -29,8 +29,10 @@ def setup_config():
     CONFIG_PATH = get_config_path()
     if not os.path.exists(CONFIG_PATH):
         os.mkdir(CONFIG_PATH)
-        with open(os.path.join(CONFIG_PATH, "config.yaml"), "w") as f:
+        path = os.path.join(CONFIG_PATH, "config.yaml")
+        with open(path, "w") as f:
             f.write(create_default_config())
+            print(f"Created config file at {path}")
 
 
 def get_config():

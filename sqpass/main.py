@@ -1,14 +1,18 @@
+import os
 from getpass import getpass
-from pyperclip import os
-from passwordManager import base
-from passwordManager import argaction
-from passwordManager.ciphers import hashuser, encrypt, decrypt
-from passwordManager.cache import set_with_ttl, CACHE_DIR
+from sqpass.passwordManager import base
+from sqpass.passwordManager import argaction
+from sqpass.passwordManager.ciphers import hashuser, encrypt, decrypt
+from sqpass.passwordManager.cache import set_with_ttl, CACHE_DIR
+from sqpass.passwordManager.tools import is_process_running
+from sqpass.passwordManager.parser import run_parser
+from sqpass.passwordManager.base import readpass, pathname
+
+
 from os import urandom
-from passwordManager.base import readpass
+
 from subprocess import Popen
-from passwordManager.tools import is_process_running
-from passwordManager.parser import run_parser
+
 import pickle
 
 pwdwrong = [
@@ -32,6 +36,10 @@ class UserArgManager:
         if os.path.exists(CACHE_DIR):
             with open(CACHE_DIR, 'rb') as file:
                 data = pickle.load(file)
+
+        if not os.path.exists(pathname):
+            print('No Passkey found\nRun `sq-init` initialize')
+            exit()
         if data:
             salt, iv, enc, rand_byte = data['upass'][0]
             upass = decrypt(salt, iv, enc, rand_byte).decode()
@@ -200,6 +208,9 @@ class UserArgManager:
                 Popen(['python', 'observer.py'],
                       start_new_session=True)
 
+    def initial_setup(self):
+        pass
+
     def handle_functions(self):
         actions = {
             "update": self.handle_update,
@@ -212,7 +223,7 @@ class UserArgManager:
             "passw": lambda: self.handle_insert(passw=True),
             "keypass": lambda: self.handle_insert(keypass=True),
             "generate": self.generate_password,
-            "login": self.handle_login
+            "login": self.handle_login,
         }
 
         for arg, action in actions.items():
@@ -220,7 +231,11 @@ class UserArgManager:
                 action()
 
 
-if __name__ == "__main__":
+def main():
     argmanager = UserArgManager(args=run_parser())
     argmanager.setup()
     argmanager.handle_functions()
+
+
+if __name__ == "__main__":
+    main()

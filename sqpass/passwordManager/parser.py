@@ -40,6 +40,7 @@ def run_parser():
     flags.add_argument(
         "--rm", "--remove", dest="remove", metavar="", help="remove a credential"
     )
+
     flags.add_argument(
         "-n", "--normal", dest="normal", action="store_true", help="Show key while typing"
     )

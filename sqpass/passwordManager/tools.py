@@ -1,5 +1,5 @@
-from passwordManager.ciphers import encrypt, decrypt
-from passwordManager.conf import get_config
+from sqpass.passwordManager.ciphers import encrypt, decrypt
+from sqpass.passwordManager.conf import get_config
 import json
 import psutil
 from rich.table import Table
