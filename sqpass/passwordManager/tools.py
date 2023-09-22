@@ -1,5 +1,6 @@
 from sqpass.passwordManager.ciphers import encrypt, decrypt
 from sqpass.passwordManager.conf import get_config
+from sqpass.create_db import check_db_file, create_database
 import json
 import psutil
 from rich.table import Table
@@ -8,6 +9,8 @@ from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.console import Console
 from rich.layout import Layout
+import sqlite3
+from contextlib import contextmanager
 
 
 def print_note(note, title, sub, markdown=True):
@@ -61,3 +64,33 @@ def is_process_running(command):
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return False
+
+
+@contextmanager
+def opendb(path):
+    conn = sqlite3.connect(path)
+    cur = conn.cursor()
+    try:
+        yield cur
+    except (sqlite3.DatabaseError, sqlite3.OperationalError) as e:
+        raise
+    finally:
+        conn.commit()
+        conn.close()
+
+
+@contextmanager
+def dbfetch(path, query, data=None):
+    try:
+        conn = sqlite3.connect(path)
+        cur = conn.cursor()
+        if data is None:
+            cur.execute(query)
+        else:
+            cur.execute(query, data)
+        yield cur.fetchall()
+    except (sqlite3.DatabaseError) as e:
+        print("Database not found, Try to run `sq-init`")
+        exit()
+    finally:
+        cur.close()

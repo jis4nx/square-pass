@@ -33,8 +33,6 @@ def check_db_table():
                 if userInp.lower() == 'y':
                     os.remove(db_path)
                     create_database()
-                elif userInp.lower() == 'n':
-                    pass
         except sqlite3.OperationalError as e:
             create_database()
 

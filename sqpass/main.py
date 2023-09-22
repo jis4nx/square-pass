@@ -46,6 +46,11 @@ class UserArgManager:
             self.userInp = upass
             self.db = base.DatabaseManager(
                 self.userInp, hashuser(self.userInp))
+
+            self.service_dict = {'passw': self.db.view_userpasses,
+                                 'notes': self.db.view_notes,
+                                 'keys': self.db.view_keys
+                                 }
         else:
             userpass = getpass(prompt="Enter Masterpass: ")
             hashed_pass = hashuser(userpass)
@@ -76,15 +81,9 @@ class UserArgManager:
             self.db.insert()
         if keypass:
             mode = False if self.args.normal else True
-            if self.args.keypass == "None":
-                self.db.keyins(silent=mode)
-            else:
-                self.db.keyins(self.args.keypass, silent=mode)
+            self.db.keyins(title=self.args.keypass, silent=mode)
         if note:
-            if note == "None":
-                self.db.noteins()
-            else:
-                self.db.noteins(self.args.note)
+            self.db.noteins(title=self.args.note)
 
     def generate_password(self):
         passw = argaction.generate_password(self.args.generate)
@@ -96,13 +95,9 @@ class UserArgManager:
         try:
             idx = int(self.args.cat.split("/")[1])
             service = self.args.cat.split("/")[0]
-            if service == "notes":
-                self.db.view_notes(noteid=idx)
-            elif service == "keys":
-                self.db.view_keys(keyid=idx)
-            elif service == "passw":
-                self.db.view_userpasses(userid=idx)
-            else:
+            try:
+                self.service_dict[service](indexId=idx)
+            except KeyError:
                 print("Availables: ", " | ".join(services))
         except (IndexError, ValueError):
             print("Usage: sq -cat service/index")
@@ -126,15 +121,9 @@ class UserArgManager:
         elif self.args.appname:
             self.db.filter(icase=mode, appname=self.args.appname)
         else:
-            if self.args.showlist == "passw":
-                self.db.view_userpasses(sort=sort, order=order)
-            elif self.args.showlist == "notes":
-                self.db.view_notes(sort=sort, order=order)
-
-            elif self.args.showlist == "keys":
-                self.db.view_keys(sort=sort, order=order)
-
-            else:
+            try:
+                self.service_dict[self.args.showlist](sort=sort, order=order)
+            except KeyError:
                 self.show_usage(arg="--ls", example="passw",
                                 usage_msg="<service>")
 
@@ -152,13 +141,8 @@ class UserArgManager:
     def handle_bigbang(self):
         if self.args.bigbang == "boom":
             self.db.bigbang(boom=True)
-
-        elif self.args.bigbang == "passw":
-            self.db.bigbang(userpass=True)
-        elif self.args.bigbang == "keys":
-            self.db.bigbang(keys=True)
-        elif self.args.bigbang == "notes":
-            self.db.bigbang(notes=True)
+        if self.args.bigbang in services:
+            self.db.bigbang(table_to_delete=self.args.bigbang)
         else:
             print("Available args: \nboom | passw | keys | notes")
 
@@ -179,7 +163,8 @@ class UserArgManager:
                 print("Availables: \nusers | keys")
 
         except Exception as e:
-            self.show_usage(show_services=True, usage_msg=usage, example=eg)
+            self.show_usage(show_services=True,
+                            usage_msg=usage, example=eg)
 
     def handle_export(self):
         try:

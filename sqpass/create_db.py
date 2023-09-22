@@ -14,6 +14,13 @@ def check_db_file():
     return False
 
 
+def clear_db():
+    os.remove(db_path)
+    print('Rebuilding database...')
+    create_database()
+    print('[+]Done')
+
+
 def create_database():
 
     conn = sqlite3.connect(db_path)
@@ -46,8 +53,6 @@ def create_database():
         ) """)
 
     conn.commit()
-
-    print(f"Create database successfully at {db_path}")
     conn.close()
 
 
