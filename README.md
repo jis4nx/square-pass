@@ -40,4 +40,21 @@ Square-pass in bullet speed :
   
 </br>
 
+### How To Install ??
+
+To install, just run the following command  on your terminal: 
+
+```
+- pip install square-pass
+- sq-init
+```
+
+***before you start using square-pass, to setup your master password and other stuff, you need to run `sq-init` mandatorily.***
+
+ 
+
+You are good to go, Enjoy.
+
+
+
 ### Docs: [ About ](https://github.com/) | [ Installation ](https://github.com/jis4nx/square-pass/wiki/) | [ Base Usage ](https://github.com/jis4nx/square-pass/wiki/) | [ Contribution ](https://github/)
