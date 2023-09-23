@@ -10,20 +10,29 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    python-build:
+        name: Build and Install
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@main
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install -r requirements.txt
+            - name: Initialize Python 3.9
+              uses: actions/setup-python@v1
+              with:
+                python-version: 3.9
 
-    - name: Run the app
-      run: |
-        echo 'DONE'
+            - name: Install dependencies
+              run: |
+                python -m pip install --upgrade pip
+                pip install flake8
+         
+            - name: Lint with flake8
+              run: |
+                flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+                flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          
+            - name: Build binary wheel and a source tarball
+              run: |
+                python setup.py bdist_wheel sdist
+                pip install .
+              
