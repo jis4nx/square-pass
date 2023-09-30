@@ -63,6 +63,10 @@ class UserArgManager:
                     break
             self.db = base.DatabaseManager(
                 self.userInp, hashuser(self.userInp))
+            self.service_dict = {'passw': self.db.view_userpasses,
+                                 'notes': self.db.view_notes,
+                                 'keys': self.db.view_keys
+                                 }
 
     def show_usage(self, show_services=True, usage_msg=None, example=None, show_fields=False, arg=None):
         print("")
@@ -188,10 +192,10 @@ class UserArgManager:
             rand_byte = urandom(16)
             salt, iv, enc = encrypt(self.userInp.encode('utf-8'), rand_byte)
             set_with_ttl('upass', [salt, iv, enc, rand_byte], int(cache_time))
-            cmd = ['python', 'observer.py']
-            if not is_process_running(cmd):
-                Popen(['python', 'observer.py'],
-                      start_new_session=True)
+            path = os.path.join(os.path.dirname(
+                os.path.abspath(__file__)), 'observer.py')
+            if not is_process_running(path):
+                Popen(['python', path], start_new_session=True)
 
     def initial_setup(self):
         pass

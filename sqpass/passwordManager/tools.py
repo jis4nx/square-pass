@@ -58,11 +58,10 @@ def print_box(lst, master_pass):
 def is_process_running(command):
     for proc in psutil.process_iter(attrs=['cmdline']):
         try:
-            cmdline = proc.info['cmdline']
-            if cmdline == command:
+            if command in proc.info['cmdline']:
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
+            return False
     return False
 
 
