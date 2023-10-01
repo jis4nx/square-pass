@@ -8,30 +8,21 @@ import getpass
 import sys
 import os
 import base64
-import platform
 import json
-
-
-home_dir = os.path.expanduser("~")
-db_path = os.path.join(home_dir, ".local", "share", "pass.db")
-
-paths = {
-    'Linux': os.path.expanduser("~/.local/share/pass.key"),
-    'Windows': os.path.expanduser("~\\AppData\\pass.key")
-}
-pathname = paths.get(platform.system())
+from sqpass.install import password_path
+from sqpass.create_db import db_path
 
 
 def readpass():
-    if not os.path.exists(pathname):
-        print('No Passkey found\nPerhaps you forgot to execute `sq-init`')
+    if not os.path.exists(password_path):
+        print("No Passkey found\nPerhaps you forgot to execute `sq-init`")
     else:
-        with open(pathname, "r") as file:
+        with open(password_path, "r") as file:
             return file.read()
 
 
 class DatabaseManager:
-    """ Class Doc Goes Here"""
+    """Class Doc Goes Here"""
 
     def __init__(self, MasterPass, cryptedpass):
         self.User_Masterpass = readpass()
@@ -46,7 +37,7 @@ class DatabaseManager:
         except Exception:
             self.termlines = 100
 
-    def update(self, table='passw', id=None):
+    def update(self, table="passw", id=None):
         if table == "passw":
             lst = ["app_name", "username", "passwd"]
             lstinp = ["App Name: ", "Username: ", "Password: "]
@@ -59,9 +50,11 @@ class DatabaseManager:
             if inp == "passwd":
                 passInp = getpass.getpass("Password: ")
                 if passInp:
-                    salt, iv, enc = encrypt(passInp.encode(
-                        'utf-8'), self.MasterPass.encode('utf-8'))
-                    enc = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
+                    salt, iv, enc = encrypt(
+                        passInp.encode(
+                            "utf-8"), self.MasterPass.encode("utf-8")
+                    )
+                    enc = json.dumps({"salt": salt, "iv": iv, "enc": enc})
             else:
                 enc = input(lstinp[idxlst])
             userinp.append(enc)
@@ -101,19 +94,20 @@ class DatabaseManager:
                     decipher = decrypt(
                         salt, iv, ct, self.MasterPass.encode()).decode()
                     passlist.append(
-                        {'Username': col[0], 'App': col[1], 'Pass': decipher})
+                        {"Username": col[0], "App": col[1], "Pass": decipher}
+                    )
         return passlist
 
     def _print_passwords(self, passlist, cred):
-        headers = ['Username', 'App Name', 'Password']
+        headers = ["Username", "App Name", "Password"]
         t = PrettyTable(headers)
         count = 0
         for passw in passlist:
             print()
-            if cred == passw['Pass']:
+            if cred == passw["Pass"]:
                 count += 1
-                t.add_row([passw['Username'], passw['App'], passw['Pass']])
-        col = ['' for _ in range(count-1)]
+                t.add_row([passw["Username"], passw["App"], passw["Pass"]])
+        col = ["" for _ in range(count - 1)]
         t.add_column("Count", [str(count), *col])
         print(t)
 
@@ -124,7 +118,9 @@ class DatabaseManager:
             if icase:
                 readquery = """SELECT * FROM passw WHERE username = '{}' COLLATE NOCASE {} app_name = '{}' COLLATE NOCASE;"""
             else:
-                readquery = """SELECT * FROM passw WHERE username = '{}' {} app_name = '{}';"""
+                readquery = (
+                    """SELECT * FROM passw WHERE username = '{}' {} app_name = '{}';"""
+                )
             with dbfetch(self.db, readquery.format(username, state, appname)) as row:
                 if row:
                     tools.print_box(row, self.MasterPass)
@@ -141,7 +137,9 @@ class DatabaseManager:
                     notes.field_names = ["Index", "Title", "Content"]
                     for idx, title, cont, dtime in row:
                         notes.add_row(
-                            [idx, title, base64.b64decode(cont).decode()[:10]+"..."])
+                            [idx, title, base64.b64decode(
+                                cont).decode()[:10] + "..."]
+                        )
                     print(notes)
 
                 else:
@@ -176,7 +174,9 @@ class DatabaseManager:
                     return keys
                 print(keys)
 
-    def view_userpasses(self, sort="id", order="ASC", indexId=None, countpass=False, export=False):
+    def view_userpasses(
+        self, sort="id", order="ASC", indexId=None, countpass=False, export=False
+    ):
         if indexId is None:
             readquery = f"SELECT * FROM passw ORDER BY {sort} {order};"
         else:
@@ -193,17 +193,17 @@ class DatabaseManager:
                             VALUES (:appname ,:u_name,:passw)"""
         app_name = input("App Name:")
         u_name = input("Username: ")
-        salt, iv, enc = encrypt(getpass.getpass("Password: ").encode(
-            'utf-8'), self.MasterPass.encode('utf-8'))
-        data = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
+        salt, iv, enc = encrypt(
+            getpass.getpass("Password: ").encode("utf-8"),
+            self.MasterPass.encode("utf-8"),
+        )
+        data = json.dumps({"salt": salt, "iv": iv, "enc": enc})
 
         try:
             with opendb(self.db) as cur:
-                cur.execute(insert_query, {
-                    "appname": app_name,
-                    "u_name": u_name,
-                    "passw": data
-                }
+                cur.execute(
+                    insert_query, {"appname": app_name,
+                                   "u_name": u_name, "passw": data}
                 )
             print(f"[+]Successfully Added for {u_name}")
         except sqlite3.Error as error:
@@ -212,23 +212,21 @@ class DatabaseManager:
     def keyins(self, title=None, silent=True):
         insert_query = """INSERT INTO keys (title, key)
                             VALUES (:key_title ,:key_pass)"""
-        if title == 'None':
+        if title == "None":
             title = input("Title: ")
         if silent:
-            salt, iv, enc = encrypt(getpass.getpass(
-                "Key: ").encode(), self.MasterPass.encode())
-            data = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
+            salt, iv, enc = encrypt(
+                getpass.getpass("Key: ").encode(), self.MasterPass.encode()
+            )
+            data = json.dumps({"salt": salt, "iv": iv, "enc": enc})
         else:
             salt, iv, enc = encrypt(
                 input("Key: ").encode(), self.MasterPass.encode())
-            data = json.dumps({'salt': salt, 'iv': iv, 'enc': enc})
+            data = json.dumps({"salt": salt, "iv": iv, "enc": enc})
         try:
             with opendb(self.db) as cur:
                 cur.execute(insert_query, {
-                    "key_title": title,
-                    "key_pass": data
-                }
-                )
+                            "key_title": title, "key_pass": data})
             print()
             print(f"[+]Stored Key for {title}")
         except sqlite3.Error as error:
@@ -243,22 +241,24 @@ class DatabaseManager:
         save_text = " Save [CTRL + D]  "
         discard = " Cancel [CTRL + C] "
 
-        eq = (self.termlines//2)-(len(save_text+centext+discard)//2)
-        last_put = " "*(eq)+centext+" "*(eq)
-        print("_"*self.termlines)
+        eq = (self.termlines // 2) - (len(save_text + centext + discard) // 2)
+        last_put = " " * (eq) + centext + " " * (eq)
+        print("_" * self.termlines)
         print(discard, end="")
         print(last_put, end="")
         print(save_text, end="")
-        print("-"*self.termlines)
+        print("-" * self.termlines)
 
         note_content = "".join(sys.stdin.readlines())
         contb64 = base64.b64encode(note_content.encode())
         try:
             with opendb(self.db) as cur:
-                cur.execute(insert_query, {
-                    "note_title": title,
-                    "note_content": contb64,
-                }
+                cur.execute(
+                    insert_query,
+                    {
+                        "note_title": title,
+                        "note_content": contb64,
+                    },
                 )
             print()
             print(f"[+]Note Added")
@@ -266,7 +266,6 @@ class DatabaseManager:
             print("Failed to Insert Into Database", error)
 
     def remove_cd(self, table=None, u_id=None):
-
         query = f"DELETE FROM {table} WHERE id={u_id}"
 
         with opendb(self.db) as cur:
@@ -291,7 +290,7 @@ class DatabaseManager:
         else:
             print("service name was not found")
         print(backup)
-        with open("backup"+ext, "w") as f:
+        with open("backup" + ext, "w") as f:
             for line in backup:
                 if line != "\n":
                     f.write(line)

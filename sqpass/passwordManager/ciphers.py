@@ -12,9 +12,9 @@ def encrypt(data, master_key):
     cipher = AES.new(key, AES.MODE_CBC)
     ct_bytes = cipher.encrypt(pad(data, AES.block_size))
 
-    iv = base64.b64encode(cipher.iv).decode('utf-8')
-    ct = base64.b64encode(ct_bytes).decode('utf-8')
-    salt = base64.b64encode(salt).decode('utf-8')
+    iv = base64.b64encode(cipher.iv).decode("utf-8")
+    ct = base64.b64encode(ct_bytes).decode("utf-8")
+    salt = base64.b64encode(salt).decode("utf-8")
 
     return salt, iv, ct
 
@@ -32,14 +32,14 @@ def decrypt(salt, iv, ct, master_key):
 
 def finalhash(msg, masterkey):
     masterkey = base64.b64encode(masterkey)
-    IV = "agun".encode()*4
+    IV = "agun".encode() * 4
     cipher = AES.new(masterkey, AES.MODE_CFB, IV)
     encd = base64.b64encode(IV + cipher.encrypt(msg))
     return hashlib.sha256(encd).hexdigest()
 
 
 def hashuser(masterkey):
-    salt = 'xx01'
+    salt = "xx01"
     keysalt = (masterkey[-4:] + salt) * 2
     try:
         hashed_mpass = finalhash(masterkey.encode(), keysalt.encode())

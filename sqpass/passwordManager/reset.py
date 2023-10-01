@@ -1,6 +1,7 @@
 from ciphers import decrypt, encrypt
 import sqlite3
 
+
 def resetpass():
     credlist = []
     conn = sqlite3.connect("../passwordmanager.db")
@@ -18,4 +19,6 @@ def resetpass():
             conn.close()
     decpass = decrypt(mpass, keysalt)
     return decpass
+
+
 print(resetpass())

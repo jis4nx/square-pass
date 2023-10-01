@@ -2,7 +2,6 @@ import argparse
 
 
 def run_parser():
-
     parser = argparse.ArgumentParser(
         prog="ins",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -23,11 +22,22 @@ def run_parser():
         help="Update your credential with service name",
     )
     opt.add_argument(
-        "-l", "--login", dest="login", metavar="", nargs="?", const="None", help="Login to remember password"
+        "-l",
+        "--login",
+        dest="login",
+        metavar="",
+        nargs="?",
+        const="None",
+        help="Login to remember password",
     )
     opt.add_argument("-cat", "--cat", dest="cat", metavar="", help="View File")
     opt.add_argument(
-        "-c", "--count", dest="count", metavar="", nargs=2, help="Counts reused credential"
+        "-c",
+        "--count",
+        dest="count",
+        metavar="",
+        nargs=2,
+        help="Counts reused credential",
     )
     flags.add_argument(
         "--ls",
@@ -42,10 +52,14 @@ def run_parser():
     )
 
     flags.add_argument(
-        "-n", "--normal", dest="normal", action="store_true", help="Show key while typing"
+        "-n",
+        "--normal",
+        dest="normal",
+        action="store_true",
+        help="Show key while typing",
     )
 
-# Insert
+    # Insert
     flags.add_argument(
         "-P", "--passw", dest="passw", action="store_true", help="Add new credential"
     )
@@ -53,10 +67,16 @@ def run_parser():
         "-K", "--keypass", dest="keypass", nargs="?", const="None", help="Add Key"
     )
     opt.add_argument(
-        "-N", "--note", dest="note", metavar="", nargs="?", const="None", help="Add Note"
+        "-N",
+        "--note",
+        dest="note",
+        metavar="",
+        nargs="?",
+        const="None",
+        help="Add Note",
     )
 
-# Filter
+    # Filter
     opt.add_argument(
         "-u", "--username", dest="username", metavar="", help="Filter by Username"
     )
@@ -78,7 +98,7 @@ def run_parser():
         help="Index for the credential update",
     )
 
-# Opt args
+    # Opt args
     opt.add_argument(
         "-C", "--copy", dest="copy", action="store_true", help="Copy to clipboard"
     )
@@ -89,9 +109,9 @@ def run_parser():
         action="store_true",
         help="Show recently modified credentials",
     )
-# opt.add_argument("-W",'--warn',         action="store_true",                help="warn about weak passwords")
+    # opt.add_argument("-W",'--warn',         action="store_true",                help="warn about weak passwords")
 
-# Extra Args
+    # Extra Args
 
     dan = parser.add_argument_group("Often Args :", "")
     dan.add_argument(
@@ -110,7 +130,11 @@ def run_parser():
         help="Generate Advance & Strong Pass",
     )
     opt.add_argument(
-        "-e", "--export", dest="export", nargs="+", help="Generate Advance & Strong Pass"
+        "-e",
+        "--export",
+        dest="export",
+        nargs="+",
+        help="Generate Advance & Strong Pass",
     )
 
     args = parser.parse_args()

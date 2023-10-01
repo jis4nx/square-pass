@@ -1,4 +1,5 @@
 import os
+import platform
 from getpass import getpass
 from sqpass.passwordManager import base
 from sqpass.passwordManager import argaction
@@ -6,12 +7,13 @@ from sqpass.passwordManager.ciphers import hashuser, encrypt, decrypt
 from sqpass.passwordManager.cache import set_with_ttl, CACHE_DIR
 from sqpass.passwordManager.tools import is_process_running
 from sqpass.passwordManager.parser import run_parser
-from sqpass.passwordManager.base import readpass, pathname
+from sqpass.passwordManager.base import readpass
+from sqpass.install import password_path
 
 
 from os import urandom
 
-from subprocess import Popen
+import subprocess
 
 import pickle
 
@@ -34,23 +36,24 @@ class UserArgManager:
     def setup(self):
         data = None
         if os.path.exists(CACHE_DIR):
-            with open(CACHE_DIR, 'rb') as file:
+            with open(CACHE_DIR, "rb") as file:
                 data = pickle.load(file)
 
-        if not os.path.exists(pathname):
-            print('No Passkey found\nRun `sq-init` initialize')
+        if not os.path.exists(password_path):
+            print("No Passkey found\nRun `sq-init` initialize")
             exit()
         if data:
-            salt, iv, enc, rand_byte = data['upass'][0]
+            salt, iv, enc, rand_byte = data["upass"][0]
             upass = decrypt(salt, iv, enc, rand_byte).decode()
             self.userInp = upass
             self.db = base.DatabaseManager(
                 self.userInp, hashuser(self.userInp))
 
-            self.service_dict = {'passw': self.db.view_userpasses,
-                                 'notes': self.db.view_notes,
-                                 'keys': self.db.view_keys
-                                 }
+            self.service_dict = {
+                "passw": self.db.view_userpasses,
+                "notes": self.db.view_notes,
+                "keys": self.db.view_keys,
+            }
         else:
             userpass = getpass(prompt="Enter Masterpass: ")
             hashed_pass = hashuser(userpass)
@@ -63,12 +66,20 @@ class UserArgManager:
                     break
             self.db = base.DatabaseManager(
                 self.userInp, hashuser(self.userInp))
-            self.service_dict = {'passw': self.db.view_userpasses,
-                                 'notes': self.db.view_notes,
-                                 'keys': self.db.view_keys
-                                 }
+            self.service_dict = {
+                "passw": self.db.view_userpasses,
+                "notes": self.db.view_notes,
+                "keys": self.db.view_keys,
+            }
 
-    def show_usage(self, show_services=True, usage_msg=None, example=None, show_fields=False, arg=None):
+    def show_usage(
+        self,
+        show_services=True,
+        usage_msg=None,
+        example=None,
+        show_fields=False,
+        arg=None,
+    ):
         print("")
         if show_services:
             print(f"Available Services -[ {' | '.join(services)} ]")
@@ -111,8 +122,9 @@ class UserArgManager:
             mode = True if self.args.ignorecase else False
             service = self.args.count[0].split("/")[0]
             field = self.args.count[0].split("/")[1]
-            self.db.count(icase=mode, table=service,
-                          column=field, cred=self.args.count[1])
+            self.db.count(
+                icase=mode, table=service, column=field, cred=self.args.count[1]
+            )
         except Exception as err:
             print(err)
 
@@ -167,8 +179,7 @@ class UserArgManager:
                 print("Availables: \nusers | keys")
 
         except Exception as e:
-            self.show_usage(show_services=True,
-                            usage_msg=usage, example=eg)
+            self.show_usage(show_services=True, usage_msg=usage, example=eg)
 
     def handle_export(self):
         try:
@@ -190,12 +201,16 @@ class UserArgManager:
                 else:
                     break
             rand_byte = urandom(16)
-            salt, iv, enc = encrypt(self.userInp.encode('utf-8'), rand_byte)
-            set_with_ttl('upass', [salt, iv, enc, rand_byte], int(cache_time))
-            path = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), 'observer.py')
+            salt, iv, enc = encrypt(self.userInp.encode("utf-8"), rand_byte)
+            set_with_ttl("upass", [salt, iv, enc, rand_byte], int(cache_time))
+            path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "observer.py"
+            )
             if not is_process_running(path):
-                Popen(['python', path], start_new_session=True)
+                if platform.system() == "Windows":
+                    subprocess.Popen(
+                        ["python", path], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+                subprocess.Popen(["python", path])
 
     def initial_setup(self):
         pass

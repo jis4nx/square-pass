@@ -3,16 +3,14 @@ import pickle
 import os
 import platform
 
-cache_paths = {
-    'Linux': os.path.expanduser("/tmp/"),
-    'Windows': os.path.expanduser("")
-}
+cache_paths = {"Linux": os.path.expanduser(
+    "/tmp/"), "Windows": os.path.expanduser("~\\AppData\\Local\\Temp\\")}
 
 os_name = platform.system()
 CACHE_DIR = os.path.join(cache_paths.get(os_name, ""), "lvl.pk")
 
 try:
-    with open(CACHE_DIR, 'rb') as f:
+    with open(CACHE_DIR, "rb") as f:
         cache_data = pickle.load(f)
 except FileNotFoundError:
     cache_data = {}

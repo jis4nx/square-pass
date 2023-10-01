@@ -5,12 +5,11 @@ import random
 
 def generate_password(passlen, lc=50, nc=30, pc=20):
     letters = list(string.ascii_letters)
-    puncs = ['$', '#', '_', '-', '!', '@',
-             '+', '&', '(', ')', '?', '.', '*', '%']
+    puncs = ["$", "#", "_", "-", "!", "@", "+", "&", "(", ")", "?", ".", "*", "%"]
     digits = list(string.digits)
 
     def percent(char, pers):
-        return int(pers*(char/100))
+        return int(pers * (char / 100))
 
     password = ""
     password += "".join(random.choices(letters, k=percent(passlen, lc)))
@@ -26,7 +25,7 @@ def generate_password(passlen, lc=50, nc=30, pc=20):
 def copy_to_clipboard(*argv, combo=False, divider=":"):
     """
 
-    simply copy a string to clipboard or mixes gmail,password separated by `devider` 
+    simply copy a string to clipboard or mixes gmail,password separated by `devider`
     to make a combo and copy the full text into clipboard
 
     `*argv` : List of arguments
@@ -42,9 +41,9 @@ def copy_to_clipboard(*argv, combo=False, divider=":"):
            copy_to_clipboard(
 
                         "helloworld@gmail.com",
-                        "This_is_A_pass", 
-                        combo=True , 
-                        divider="-" 
+                        "This_is_A_pass",
+                        combo=True ,
+                        divider="-"
 
                         )
     """
@@ -55,7 +54,7 @@ def copy_to_clipboard(*argv, combo=False, divider=":"):
         combined_text = ""
         for arg in argv:
             if arg != argv[-1]:
-                combined_text += str(arg)+divider
+                combined_text += str(arg) + divider
             else:
                 combined_text += str(arg)
 
@@ -75,9 +74,9 @@ def show_hints(text, text_type="password", security=3, jokes=False):
     if jokes is False:
         amount_of_chars = len(text) - security + 1
         hidden_chars = "*" * amount_of_chars
-        hint = text[0]+hidden_chars+text[-(security):]
+        hint = text[0] + hidden_chars + text[-(security):]
 
-        return (hint)
+        return hint
 
     else:
         pass

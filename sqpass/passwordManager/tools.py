@@ -14,7 +14,6 @@ from contextlib import contextmanager
 
 
 def print_note(note, title, sub, markdown=True):
-
     console = Console()
     layout = Layout()
 
@@ -26,7 +25,7 @@ def print_note(note, title, sub, markdown=True):
         padding=(1, 2),
         title=f"[b red]{title}",
         border_style="bright_blue",
-        subtitle=sub
+        subtitle=sub,
     )
 
     console.print(styles)
@@ -34,21 +33,21 @@ def print_note(note, title, sub, markdown=True):
 
 def print_box(lst, master_pass):
     config = get_config()
-    colors = config.get('passw_colors')
+    colors = config.get("passw_colors")
     table = Table()
-    table.add_column("Index", style=colors.get('index'))
-    table.add_column("Username", style=colors.get('username'))
-    table.add_column("App Name", style=colors.get('appname'))
-    table.add_column("Password", style=colors.get('password'))
+    table.add_column("Index", style=colors.get("index"))
+    table.add_column("Username", style=colors.get("username"))
+    table.add_column("App Name", style=colors.get("appname"))
+    table.add_column("Password", style=colors.get("password"))
 
     for row in lst:
         idx, username, app_name = row[:3]
         res = json.loads(row[3])
-        salt = res['salt']
-        iv = res['iv']
-        cipher = res['enc']
+        salt = res["salt"]
+        iv = res["iv"]
+        cipher = res["enc"]
         decipher = decrypt(
-            salt, iv, cipher, master_pass.encode()).decode('utf-8')
+            salt, iv, cipher, master_pass.encode()).decode("utf-8")
         table.add_row(str(idx), username, app_name, decipher)
     console = Console()
     console.print(table)
@@ -56,9 +55,10 @@ def print_box(lst, master_pass):
 
 
 def is_process_running(command):
-    for proc in psutil.process_iter(attrs=['cmdline']):
+    for proc in psutil.process_iter(attrs=["cmdline"]):
         try:
-            if command in proc.info['cmdline']:
+            cmdline = proc.info.get("cmdline")
+            if cmdline is not None and command in cmdline:
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             return False
@@ -88,7 +88,7 @@ def dbfetch(path, query, data=None):
         else:
             cur.execute(query, data)
         yield cur.fetchall()
-    except (sqlite3.DatabaseError) as e:
+    except sqlite3.DatabaseError as e:
         print("Database not found, Try to run `sq-init`")
         exit()
     finally:
