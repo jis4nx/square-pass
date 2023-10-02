@@ -274,8 +274,9 @@ class DatabaseManager:
     def bigbang(self, boom=False, table_to_delete=None):
         if boom:
             clear_db()
-        with opendb(self.db) as cur:
-            cur.execute(f"DELETE FROM {table_to_delete}")
+        else:
+            with opendb(self.db) as cur:
+                cur.execute(f"DELETE FROM {table_to_delete}")
 
     def export(self, service=None, json=False, csv=False):
         backup = ""

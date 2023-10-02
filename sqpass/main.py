@@ -4,7 +4,7 @@ from getpass import getpass
 from sqpass.passwordManager import base
 from sqpass.passwordManager import argaction
 from sqpass.passwordManager.ciphers import hashuser, encrypt, decrypt
-from sqpass.passwordManager.cache import set_with_ttl, CACHE_DIR
+from sqpass.passwordManager.cache import get_valid_cache, set_with_ttl, CACHE_DIR
 from sqpass.passwordManager.tools import is_process_running
 from sqpass.passwordManager.parser import run_parser
 from sqpass.passwordManager.base import readpass
@@ -34,16 +34,12 @@ class UserArgManager:
         self.args = args
 
     def setup(self):
-        data = None
-        if os.path.exists(CACHE_DIR):
-            with open(CACHE_DIR, "rb") as file:
-                data = pickle.load(file)
-
         if not os.path.exists(password_path):
             print("No Passkey found\nRun `sq-init` initialize")
             exit()
-        if data:
-            salt, iv, enc, rand_byte = data["upass"][0]
+        get_cache_data = get_valid_cache()
+        if get_cache_data:
+            salt, iv, enc, rand_byte = get_cache_data
             upass = decrypt(salt, iv, enc, rand_byte).decode()
             self.userInp = upass
             self.db = base.DatabaseManager(
@@ -203,14 +199,15 @@ class UserArgManager:
             rand_byte = urandom(16)
             salt, iv, enc = encrypt(self.userInp.encode("utf-8"), rand_byte)
             set_with_ttl("upass", [salt, iv, enc, rand_byte], int(cache_time))
-            path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "observer.py"
-            )
-            if not is_process_running(path):
-                if platform.system() == "Windows":
-                    subprocess.Popen(
-                        ["python", path], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
-                subprocess.Popen(["python", path])
+
+            # path = os.path.join(
+            #     os.path.dirname(os.path.abspath(__file__)), "observer.py"
+            # )
+            # if not is_process_running(path):
+            #     if platform.system() == "Windows":
+            #         subprocess.Popen(
+            #             ["python", path], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+            #     subprocess.Popen(["python", path])
 
     def initial_setup(self):
         pass
