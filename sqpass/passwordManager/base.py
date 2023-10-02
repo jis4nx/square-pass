@@ -38,51 +38,72 @@ class DatabaseManager:
             self.termlines = 100
 
     def update(self, table="passw", id=None):
-        if table == "passw":
-            lst = ["app_name", "username", "passwd"]
-            lstinp = ["App Name: ", "Username: ", "Password: "]
-        else:
-            lst = ["title", "key"]
-            lstinp = ["Title: ", "Key: "]
-        userinp = []
+        """Updates a record in the database.
 
-        for idxlst, inp in enumerate(lst):
-            if inp == "passwd":
-                passInp = getpass.getpass("Password: ")
-                if passInp:
+        Args:
+            table: The name of the table to update.
+            id: The ID of the record to update.
+        """
+
+        columns = {
+            "passw": ["app_name", "username", "passwd"],
+            "default": ["title", "key"],
+        }
+
+        prompts = {
+            "passw": ["App Name: ", "Username: ", "Password: "],
+            "default": ["Title: ", "Key: "],
+        }
+
+        user_inputs = []
+        for col_id, column in enumerate(columns[table]):
+            if column == "passwd":
+                password = getpass.getpass("Password: ")
+                if password:
                     salt, iv, enc = encrypt(
-                        passInp.encode(
+                        password.encode(
                             "utf-8"), self.MasterPass.encode("utf-8")
                     )
                     enc = json.dumps({"salt": salt, "iv": iv, "enc": enc})
+                    user_inputs.append(enc)
             else:
-                enc = input(lstinp[idxlst])
-            userinp.append(enc)
+                user_inputs.append(input(prompts[table][col_id]))
 
-        for idx, inp in enumerate(userinp):
-            if inp != "":
-                try:
-                    with opendb(self.db) as cur:
-                        update_query = f"""UPDATE '{table}'
-                                            SET '{lst[idx]}' = '{inp}'
-                                            WHERE id={id};"""
-                        cur.execute(update_query)
-                except sqlite3.Error as err:
-                    print(err)
-            else:
-                pass
+        try:
+            with opendb(self.db) as cur:
+                for idx, inp in enumerate(user_inputs):
+                    if inp != "":
+                        update_query = f"""UPDATE '{table}' SET '{columns[table][idx]}' = :inp WHERE id=:id;"""
+                        cur.execute(update_query, {"inp": inp, "id": id})
+                print("[+] Updated")
+        except sqlite3.Error as err:
+            print(err)
 
     def count(self, icase=False, table=None, column=None, cred=None):
+        """Counts the number of rows in a table that match a given condition.
+
+        Args:
+          icase: Whether to perform a case-insensitive comparison.
+          table: The name of the table to count rows from.
+          column: The name of the column to filter by.
+          cred: The credential to use to connect to the database.
+
+        Returns:
+          The number of rows that match the given condition.
+        """
+
         if column == "passwd":
             passlist = self._get_decrypted_passwords()
             self._print_passwords(passlist, cred)
-        else:
-            readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
-            if icase:
-                readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}' COLLATE NOCASE;"
-            with dbfetch(self.db, readquery.format(table, column, cred)) as row:
-                if row:
-                    print(row[0][0])
+            return
+
+        readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}';"
+        if icase:
+            readquery = "SELECT COUNT(*) FROM {} WHERE {} = '{}' COLLATE NOCASE;"
+        with dbfetch(self.db, readquery.format(table, column, cred)) as row:
+            if row:
+                return row[0][0]
+        return 0
 
     def _get_decrypted_passwords(self):
         passlist = []
@@ -112,6 +133,14 @@ class DatabaseManager:
         print(t)
 
     def filter(self, icase=False, username=None, appname=None, state="OR"):
+        """
+        Filters (username or password or both) from `passw` table
+
+        Args:
+            icase: For case-insensitive -> boolean
+            username: Username for passw table -> string
+            appname: App Name for passw table -> string
+        """
         if username is None and appname is None:
             print("Please Define A Service Parameter")
         elif username is not None or appname is not None:
@@ -126,10 +155,20 @@ class DatabaseManager:
                     tools.print_box(row, self.MasterPass)
 
     def view_notes(self, sort="id", order="ASC", markdown=False, indexId=None):
-        if indexId is None:
-            readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
-        else:
+        """
+        View notes from the database.
+
+        Args:
+            sort: The column to sort by index [primary key] -> int
+            order: The order to sort by Ascending or Descending -> string
+            markdown: Whether to render the note content in Markdown -> bool
+            indexId: The ID of the specific note to view -> int
+        """
+
+        readquery = f"SELECT * FROM notes ORDER BY {sort} {order};"
+        if indexId is not None:
             readquery = f"SELECT * FROM notes WHERE id={indexId};"
+
         with dbfetch(self.db, readquery) as row:
             if row:
                 if indexId is None:
@@ -141,19 +180,26 @@ class DatabaseManager:
                                 cont).decode()[:10] + "..."]
                         )
                     print(notes)
-
                 else:
                     try:
                         title = row[0][1]
-                        content = (
-                            (base64.b64decode(row[0][2])).decode()).strip()
+                        content = base64.b64decode(row[0][2]).decode().strip()
                         subtitle = row[0][3]
 
-                        tools.print_note(content, title, subtitle)
+                        tools.print_note(content, title, subtitle, markdown)
                     except IndexError:
                         print("Not Available")
 
     def view_keys(self, sort="id", order="ASC", indexId=None, export=False):
+        """
+        Retrieve all Keys from `keys` table
+
+        Args:
+            sort: Sort by id [primary key] -> string
+            order: Ascending or Descending -> string
+            indexId: Index key of the table -> integer
+            export: " -> boolean"
+        """
         if indexId is None:
             readquery = f"SELECT * FROM keys ORDER BY {sort} {order};"
         else:

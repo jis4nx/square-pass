@@ -220,6 +220,7 @@ class UserArgManager:
             "remove": self.handle_remove,
             "showlist": self.handle_showlist,
             "cat": self.handle_retrieve_data,
+            "count": self.handle_count,
             "note": lambda: self.handle_insert(note=self.args.note),
             "passw": lambda: self.handle_insert(passw=True),
             "keypass": lambda: self.handle_insert(keypass=True),

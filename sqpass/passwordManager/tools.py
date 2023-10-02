@@ -36,19 +36,19 @@ def print_box(lst, master_pass):
     colors = config.get("passw_colors")
     table = Table()
     table.add_column("Index", style=colors.get("index"))
-    table.add_column("Username", style=colors.get("username"))
     table.add_column("App Name", style=colors.get("appname"))
+    table.add_column("Username", style=colors.get("username"))
     table.add_column("Password", style=colors.get("password"))
 
     for row in lst:
-        idx, username, app_name = row[:3]
+        idx, app_name, username = row[:3]
         res = json.loads(row[3])
         salt = res["salt"]
         iv = res["iv"]
         cipher = res["enc"]
         decipher = decrypt(
             salt, iv, cipher, master_pass.encode()).decode("utf-8")
-        table.add_row(str(idx), username, app_name, decipher)
+        table.add_row(str(idx), app_name, username, decipher)
     console = Console()
     console.print(table)
     return ""
