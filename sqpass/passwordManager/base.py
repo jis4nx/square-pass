@@ -1,3 +1,4 @@
+import pyperclip
 from sqpass.create_db import clear_db
 from sqpass.passwordManager.ciphers import encrypt, decrypt
 from sqpass.passwordManager import tools
@@ -132,6 +133,22 @@ class DatabaseManager:
         t.add_column("Count", [str(count), *col])
         print(t)
 
+    def global_filter(self, value, table):
+        dict_query = {
+            "passw": "SELECT * FROM passw WHERE username LIKE '%{0}%' OR app_name LIKE '%{0}%' ",
+            "notes": "SELECT * FROM notes WHERE title LIKE '%{0}%' OR content LIKE '%{0}%' ",
+            "keys": "SELECT * FROM keys WHERE title LIKE '%{0}%' "
+        }
+        query = dict_query.get(table)
+        with opendb(self.db) as cursor:
+            row = cursor.execute(query.format(value)).fetchall()
+            if table == "passw":
+                tools.print_box(row, self.MasterPass)
+            elif table == "notes":
+                tools.print_note_list(row)
+            elif table == "keys":
+                tools.print_keys(row, self.MasterPass)
+
     def filter(self, icase=False, username=None, appname=None, state="OR"):
         """
         Filters (username or password or both) from `passw` table
@@ -172,14 +189,7 @@ class DatabaseManager:
         with dbfetch(self.db, readquery) as row:
             if row:
                 if indexId is None:
-                    notes = PrettyTable()
-                    notes.field_names = ["Index", "Title", "Content"]
-                    for idx, title, cont, dtime in row:
-                        notes.add_row(
-                            [idx, title, base64.b64decode(
-                                cont).decode()[:10] + "..."]
-                        )
-                    print(notes)
+                    tools.print_note_list(row)
                 else:
                     try:
                         title = row[0][1]
@@ -190,7 +200,7 @@ class DatabaseManager:
                     except IndexError:
                         print("Not Available")
 
-    def view_keys(self, sort="id", order="ASC", indexId=None, export=False):
+    def view_keys(self, sort="id", order="ASC", indexId=None, export=False, clip=False):
         """
         Retrieve all Keys from `keys` table
 
@@ -208,20 +218,10 @@ class DatabaseManager:
             if row and len(row) < 1:
                 print("Not Available")
             else:
-                keys = PrettyTable()
-                keys.field_names = ["Index", "Title", "Key"]
-                for r in row:
-                    data = json.loads(r[2])
-                    salt, iv, ct = data.values()
-                    decipher = decrypt(
-                        salt, iv, ct, self.MasterPass.encode()).decode()
-                    keys.add_row([r[0], r[1], decipher])
-                if export:
-                    return keys
-                print(keys)
+                tools.print_keys(row, self.MasterPass, clip=clip)
 
     def view_userpasses(
-        self, sort="id", order="ASC", indexId=None, countpass=False, export=False
+        self, sort="id", order="ASC", indexId=None, countpass=False, export=False, clip=False
     ):
         if indexId is None:
             readquery = f"SELECT * FROM passw ORDER BY {sort} {order};"
@@ -229,10 +229,10 @@ class DatabaseManager:
             readquery = f"SELECT * FROM passw WHERE id = {indexId};"
         with dbfetch(self.db, readquery) as row:
             if row:
-                content_table = tools.print_box(row, self.MasterPass)
+                tools.print_box(
+                    row, self.MasterPass, clip=clip)
                 if export:
-                    return content_table
-                print(content_table)
+                    pass
 
     def insert(self, app_name=None, user_name=None):  # Pylint: disable=W0613
         insert_query = """INSERT INTO passw (app_name,username, passwd)
@@ -278,7 +278,7 @@ class DatabaseManager:
         except sqlite3.Error as error:
             print("Failed to Insert Into Database", error)
 
-    def noteins(self, title=None):
+    def noteins(self, title=None, clip=False):
         insert_query = """INSERT INTO notes (title,content, date)
                             VALUES (:note_title ,:note_content, datetime())"""
         if title == "None":

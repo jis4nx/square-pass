@@ -9,13 +9,8 @@ from sqpass.passwordManager.tools import is_process_running
 from sqpass.passwordManager.parser import run_parser
 from sqpass.passwordManager.base import readpass
 from sqpass.install import password_path
-
-
 from os import urandom
 
-import subprocess
-
-import pickle
 
 pwdwrong = [
     "Sorry that's not correct!",
@@ -32,6 +27,7 @@ class UserArgManager:
         self.userInp = None
         self.db = None
         self.args = args
+        self.clip = True if self.args.copy else False
 
     def setup(self):
         if not os.path.exists(password_path):
@@ -100,14 +96,13 @@ class UserArgManager:
         passw = argaction.generate_password(self.args.generate)
         if self.args.copy:
             argaction.copy_to_clipboard(passw)
-        print(passw)
 
     def handle_retrieve_data(self):
         try:
             idx = int(self.args.cat.split("/")[1])
             service = self.args.cat.split("/")[0]
             try:
-                self.service_dict[service](indexId=idx)
+                self.service_dict[service](indexId=idx, clip=self.clip)
             except KeyError:
                 print("Availables: ", " | ".join(services))
         except (IndexError, ValueError):
@@ -134,7 +129,8 @@ class UserArgManager:
             self.db.filter(icase=mode, appname=self.args.appname)
         else:
             try:
-                self.service_dict[self.args.showlist](sort=sort, order=order)
+                self.service_dict[self.args.showlist](
+                    sort=sort, order=order)
             except KeyError:
                 self.show_usage(arg="--ls", example="passw",
                                 usage_msg="<service>")
@@ -209,8 +205,13 @@ class UserArgManager:
             #             ["python", path], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
             #     subprocess.Popen(["python", path])
 
-    def initial_setup(self):
-        pass
+    def handle_global_filter(self):
+        if self.args.find:
+            service, value = self.args.find
+            if service in services:
+                self.db.global_filter(value, service)
+            else:
+                self.show_usage(show_services=True)
 
     def handle_functions(self):
         actions = {
@@ -221,6 +222,7 @@ class UserArgManager:
             "showlist": self.handle_showlist,
             "cat": self.handle_retrieve_data,
             "count": self.handle_count,
+            "find": self.handle_global_filter,
             "note": lambda: self.handle_insert(note=self.args.note),
             "passw": lambda: self.handle_insert(passw=True),
             "keypass": lambda: self.handle_insert(keypass=True),

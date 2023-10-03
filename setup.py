@@ -34,7 +34,6 @@ setup(
     install_requires=[
         "pycryptodome==3.10.1",
         "prettytable==2.4.0",
-        "colorama==0.4.4",
         "rich==10.15.2",
         "pyperclip",
         "psutil",

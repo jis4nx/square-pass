@@ -39,6 +39,14 @@ def run_parser():
         nargs=2,
         help="Counts reused credential",
     )
+    opt.add_argument(
+        "-f",
+        "--find",
+        dest="find",
+        metavar="",
+        nargs=2,
+        help="Find the value in Service table",
+    )
     flags.add_argument(
         "--ls",
         "--showlist",

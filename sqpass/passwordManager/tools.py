@@ -1,6 +1,8 @@
-from sqpass.passwordManager.ciphers import encrypt, decrypt
+import base64
+from prettytable import PrettyTable
+import pyperclip
+from sqpass.passwordManager.ciphers import decrypt
 from sqpass.passwordManager.conf import get_config
-from sqpass.create_db import check_db_file, create_database
 import json
 import psutil
 from rich.table import Table
@@ -15,8 +17,6 @@ from contextlib import contextmanager
 
 def print_note(note, title, sub, markdown=True):
     console = Console()
-    layout = Layout()
-
     note = Markdown(note) if markdown else note
 
     styles = Panel(
@@ -31,7 +31,7 @@ def print_note(note, title, sub, markdown=True):
     console.print(styles)
 
 
-def print_box(lst, master_pass):
+def print_box(lst, master_pass, clip=False):
     config = get_config()
     colors = config.get("passw_colors")
     table = Table()
@@ -49,8 +49,49 @@ def print_box(lst, master_pass):
         decipher = decrypt(
             salt, iv, cipher, master_pass.encode()).decode("utf-8")
         table.add_row(str(idx), app_name, username, decipher)
+    if clip:
+        pyperclip.copy(decipher)
+        return None
+    else:
+        console = Console()
+        console.print(table)
+        return ""
+
+
+def print_keys(row, master_pass, clip=False):
+    table = Table()
+    fields = ['Index', 'Title', "Key"]
+    for field in fields:
+        table.add_column(field)
+
+    for data in row:
+        data_cipher = json.loads(data[2])
+        salt, iv, ct = data_cipher.values()
+        decipher = decrypt(
+            salt, iv, ct, master_pass.encode()).decode()
+
+        table.add_row(str(data[0]), data[1], decipher)
+    if clip:
+        pyperclip.copy(decipher)
+        return ""
+    else:
+        console = Console()
+        console.print(table)
+        return ""
+
+
+def print_note_list(row):
+    notes = Table()
+    fields = ["Index", "Title", "Content"]
+    for field in fields:
+        notes.add_column(field)
+    for idx, title, cont, _ in row:
+        notes.add_row(
+            str(idx), title.strip()[:20], base64.b64decode(
+                cont).decode()[:20] + "..."
+        )
     console = Console()
-    console.print(table)
+    console.print(notes)
     return ""
 
 
