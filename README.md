@@ -40,6 +40,11 @@ Square-pass in bullet speed :
   
 </br>
 
+<div>
+  <img src="https://i.imgur.com/gdPpZPC.png" alt="square-pass-sample">
+</div>
+
+
 ### How To Install ??
 
 To install, just run the following command  on your terminal: 

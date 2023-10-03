@@ -4,8 +4,7 @@ from getpass import getpass
 from sqpass.passwordManager import base
 from sqpass.passwordManager import argaction
 from sqpass.passwordManager.ciphers import hashuser, encrypt, decrypt
-from sqpass.passwordManager.cache import get_valid_cache, set_with_ttl, CACHE_DIR
-from sqpass.passwordManager.tools import is_process_running
+from sqpass.passwordManager.cache import get_valid_cache, set_with_ttl
 from sqpass.passwordManager.parser import run_parser
 from sqpass.passwordManager.base import readpass
 from sqpass.install import password_path
